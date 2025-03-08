@@ -24,6 +24,8 @@ class ScaleColumns (BaseEstimator, TransformerMixin):
 
     def _is_correct_datatype (self, dataset_argument : Union[np.ndarray, pd.Series, pd.DataFrame]):
         numpy_datatypes = [np.int8, np.int16, np.int32, np.int64, np.float16, np.float32, np.float64]
+
+        # ----- Two if statements that will check if either numpy or pandas dataframe/series dataset has correct datatypes -----
         if isinstance(dataset_argument, np.ndarray) and dataset_argument.dtype in numpy_datatypes:
             return True
 
@@ -32,16 +34,36 @@ class ScaleColumns (BaseEstimator, TransformerMixin):
 
     def fit_transform (self, X, y=None):
         dataframe_copy = X.copy()
+        dataframe_columns, dataframe_index = X.columns, X.index
 
-        if self.preprocessing_type == "standard":
-            dataframe_copy[self.columns] = self.standard_scaler_instance.fit_transform(dataframe_copy[self.columns])
-            return dataframe_copy
-        elif self.preprocessing_type == "normalizer":
-            dataframe_copy[self.columns] = self.normalizer_instance.fit_transform(dataframe_copy[self.columns])
-            return dataframe_copy
-        elif self.preprocessing_type == "minmax":
-            dataframe_copy[self.columns] = self.minmax_scaler_instance.fit_transform(dataframe_copy[self.columns])
-            return dataframe_copy
-        else:
-            dataframe_copy[self.columns] = self.maxabs_scaler_instance.fit_transform(dataframe_copy[self.columns])
-            return dataframe_copy
+        # ----- A try-except that has if statements that will do a specific scaling technique -----
+        # ----- Will assign the scaled column features by converting it first to a dataframe then assign it to dataframe -----
+        try:
+            if self.preprocessing_type == "standard" and self._is_correct_datatype(dataframe_copy):
+                dataframe_copy[self.columns] = pd.DataFrame(
+                    data=self.standard_scaler_instance.fit_transform(dataframe_copy[self.columns]), 
+                    index=dataframe_index,
+                    columns=dataframe_columns
+                )
+                return dataframe_copy
+            elif self.preprocessing_type == "minmax" and self._is_correct_datatype(dataframe_copy):
+                dataframe_copy[self.columns] = pd.DataFrame(
+                    data=self.minmax_scaler_instance(dataframe_copy[self.columns]),
+                    index=dataframe_index,
+                    columns=dataframe_columns
+                )
+                return dataframe_copy
+            elif self.preprocessing_type == "maxabs" and self._is_correct_datatype(dataframe_copy):
+                dataframe_copy[self.columns] = pd.DataFrame(
+                    data=self.maxabs_scaler_instance(dataframe_copy[self.columns]),
+                    index=dataframe_index,
+                    columns=dataframe_columns
+                )
+                return dataframe_copy
+            elif self.preprocessing_type == "normalizer" and self._is_correct_datatype(dataframe_copy):
+                pass
+            else:
+                raise ValueError("Incorrect scaling type or incorrect dataset type passed as argument")
+        except ValueError as incorrect_arguments:
+            print("[-] Error: {}".format(incorrect_arguments))
+            exit(1)
