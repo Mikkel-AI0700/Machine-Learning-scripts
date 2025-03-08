@@ -27,7 +27,7 @@ class ScaleColumns (BaseEstimator, TransformerMixin):
         if isinstance(dataset_argument, np.ndarray) and dataset_argument.dtype in numpy_datatypes:
             return True
 
-        if isinstance(dataset_argument, (pd.Series, pd.DataFrame)) and dataset_argument[self.columns].dtype in numpy_datatypes:
+        if isinstance(dataset_argument, (pd.Series, pd.DataFrame)) and dataset_argument[self.columns].dtypes.isin(numpy_datatypes).all():
             return True
 
     def fit_transform (self, X, y=None):
@@ -43,4 +43,5 @@ class ScaleColumns (BaseEstimator, TransformerMixin):
             dataframe_copy[self.columns] = self.minmax_scaler_instance.fit_transform(dataframe_copy[self.columns])
             return dataframe_copy
         else:
-            pass
+            dataframe_copy[self.columns] = self.maxabs_scaler_instance.fit_transform(dataframe_copy[self.columns])
+            return dataframe_copy
