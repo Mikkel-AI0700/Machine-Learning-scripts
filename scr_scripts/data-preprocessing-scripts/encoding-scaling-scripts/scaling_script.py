@@ -1,69 +1,66 @@
 from typing import *
 
-import numpy as np
-import pandas as pd
+import numpy
+import pandas
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import StandardScaler, Normalizer, MinMaxScaler, MaxAbsScaler
 
-class ScaleColumns (BaseEstimator, TransformerMixin):
-    def __init__ (
-        self, 
-        columns_to_preprocess : List[str] = None, 
-        scaling_preprocessing_type : str = None, 
-        standard_scaler_params : dict = None, 
-        normalizer_params: dict = None, 
-        minmax_params : dict = None,
-        maxabs_params : dict = None
-    ):
-        self.columns = columns_to_preprocess
-        self.preprocessing_type = scaling_preprocessing_type
-        self.standard_scaler_instance = StandardScaler(**(standard_scaler_params or {}))
-        self.normalizer_instance = Normalizer(**(normalizer_params or {}))
-        self.minmax_scaler_instance = MinMaxScaler(**(minmax_params or {}))
-        self.maxabs_scaler_instance = MaxAbsScaler(**(maxabs_params or {}))
+import importlib
 
-    def _is_correct_datatype (self, dataset_argument : Union[np.ndarray, pd.Series, pd.DataFrame]):
-        numpy_datatypes = [np.int8, np.int16, np.int32, np.int64, np.float16, np.float32, np.float64]
+class ScaleColumns (BaseEstimator, TransformerMixin):
+    def __init__ (self, columns_to_preprocess : List[str], scaling_preprocessing_type : str, scaler_parameters : dict, numpy_output : bool, pandas_output : bool):
+        self.columns = columns_to_preprocess
+        self.scaler_type = scaling_preprocessing_type
+        self.scaler_parameters = scaler_parameters
+        self.numpy_output = numpy_output
+        self.pandas_output = pandas_output
+
+    def _import_required_dependencies (self):
+        required_dependencies = [
+            "numpy",
+            "pandas",
+            "sklearn.base.BaseEstimator",
+            "sklearn.base.TransformerMixin",
+            "sklearn.preprocessing.StandardScaler",
+            "sklearn.preprocessing.Normalizer",
+            "sklearn.preprocessing.MinMaxScaler",
+            "sklearn.preprocessing.MaxAbsScaler"
+        ]
+
+        for dependency in required_dependencies:
+            print("[*] Importing: {}".format(dependency))
+            importlib.import_module(dependency)
+
+    def _is_correct_datatype (self, dataset_argument : Union[numpy.ndarray, pandas.Series, pandas.DataFrame]):
+        numpy_datatypes = [numpy.int8, numpy.int16, numpy.int32, numpy.int64, numpy.float16, numpy.float32, numpy.float64]
 
         # ----- Two if statements that will check if either numpy or pandas dataframe/series dataset has correct datatypes -----
-        if isinstance(dataset_argument, np.ndarray) and dataset_argument.dtype in numpy_datatypes:
+        if isinstance(dataset_argument, numpy.ndarray) and dataset_argument.dtype in numpy_datatypes:
+            return True
+        if isinstance(dataset_argument, (pandas.Series, pandas.DataFrame)) and dataset_argument[self.columns].dtypes.isin(numpy_datatypes).all():
             return True
 
-        if isinstance(dataset_argument, (pd.Series, pd.DataFrame)) and dataset_argument[self.columns].dtypes.isin(numpy_datatypes).all():
-            return True
+    def _transform_dataset (self, retain_numpy_structure : bool, retain_pandas_structure : bool, scaler_instance : TransformerMixin, dataset : Union[numpy.ndarray, pandas.Series, pandas.DataFrame]):
+            if retain_numpy_structure:
+                return scaler_instance.fit_transform(dataset)
+
+            if retain_pandas_structure:
+                if scaler_instance.__class__.__name__ == "Normalizer":
+                    dataset = pandas.DataFrame(scaler_instance.fit_transform(dataset.values), dataset.index, dataset.columns)
+                else:
+                    dataset[[self.columns]] = pandas.DataFrame(scaler_instance.fit_transform(dataframe_copy[[self.columns]]), dataset.index, dataset.columns)
+                return dataframe_copy
 
     def fit_transform (self, X, y=None):
-        dataframe_copy = X.copy()
-        dataframe_columns, dataframe_index = X.columns, X.index
+        scaler_instances = {
+            "standard" : StandardScaler(**(self.scaler_parameters or {})),
+            "minmax" : MinMaxScaler(**(self.scaler_parameters or {})),
+            "maxabs" : MaxAbsScaler(**(self.scaler_parameters or {})),
+            "normalizer" : Normalizer(**(self.scaler_parameters or {}))
+        }
 
-        # ----- A try-except that has if statements that will do a specific scaling technique -----
-        # ----- Will assign the scaled column features by converting it first to a dataframe then assign it to dataframe -----
-        try:
-            if self.preprocessing_type == "standard" and self._is_correct_datatype(dataframe_copy):
-                dataframe_copy[self.columns] = pd.DataFrame(
-                    data=self.standard_scaler_instance.fit_transform(dataframe_copy[self.columns]), 
-                    index=dataframe_index,
-                    columns=dataframe_columns
-                )
-                return dataframe_copy
-            elif self.preprocessing_type == "minmax" and self._is_correct_datatype(dataframe_copy):
-                dataframe_copy[self.columns] = pd.DataFrame(
-                    data=self.minmax_scaler_instance(dataframe_copy[self.columns]),
-                    index=dataframe_index,
-                    columns=dataframe_columns
-                )
-                return dataframe_copy
-            elif self.preprocessing_type == "maxabs" and self._is_correct_datatype(dataframe_copy):
-                dataframe_copy[self.columns] = pd.DataFrame(
-                    data=self.maxabs_scaler_instance(dataframe_copy[self.columns]),
-                    index=dataframe_index,
-                    columns=dataframe_columns
-                )
-                return dataframe_copy
-            elif self.preprocessing_type == "normalizer" and self._is_correct_datatype(dataframe_copy):
-                pass
-            else:
-                raise ValueError("Incorrect scaling type or incorrect dataset type passed as argument")
-        except ValueError as incorrect_arguments:
-            print("[-] Error: {}".format(incorrect_arguments))
-            exit(1)
+        if self.scaler_type in scaler_instances and self._is_correct_datatype(X):
+            transformed_dataset = self._transform_dataset(self.numpy_output, self.pandas_output, scaler_instances.get(self.scaler_type), X)
+            return transformed_dataset
+        else:
+            raise ValueError("[-] Error: Either scaling_preprocessing_type argument doesn't match or dataset type is incorrect")
