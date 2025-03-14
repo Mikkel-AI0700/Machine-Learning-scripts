@@ -45,7 +45,7 @@ class EncodeColumns (BaseEstimator, TransformerMixin):
         if check_column_datatype:
             if isinstance(dataset, valid_dataset_datatypes[0]) and dataset.dtype in valid_column_datatypes:
                 return True
-            elif isinstance(dataset, (valid_dataset_datatypes[1], valid_dataset_datatypes[2])) and dataset.dtypes.isin(valid_column_datatypes).all():
+            elif isinstance(dataset, (valid_dataset_datatypes[1], valid_dataset_datatypes[2])) and dataset[self.columns].dtypes.isin(valid_column_datatypes).all():
                 return True
             else:
                 raise ValueError("[-] Error: Either numpy or pandas dataset's dtype is not correct")
@@ -57,11 +57,12 @@ class EncodeColumns (BaseEstimator, TransformerMixin):
 
         if retain_pandas_structure:
             if encoder_instance.__class__.__name__ == "OneHotEncoder":
-                temp_ohe_encoding = pandas.DataFrame(encoder_instance.fit_transform(dataset[self.columns]), dataset.index, dataset[self.columns].columns)
+                temp_ohe_encoding = pandas.DataFrame(encoder_instance.fit_transform(dataset[self.columns]), dataset[self.columns].index, dataset[self.columns].columns)
                 encoded_dataset = pandas.concat([dataset.drop(self.columns, axis=1), temp_ohe_encoding], axis=1)
+                return encoded_dataset
             else:
-                dataset[[self.columns]] = encoder_instance.fit_transform(dataset[[self.columns]])
-            return dataset
+                dataset[self.columns] = encoder_instance.fit_transform(dataset[self.columns])
+                return dataset
 
     def fit_transform(self, X, y=None):
         encoder_instances = {
