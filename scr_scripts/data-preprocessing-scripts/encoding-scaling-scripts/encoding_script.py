@@ -51,11 +51,11 @@ class EncodeColumns (BaseEstimator, TransformerMixin):
                 raise ValueError("[-] Error: Either numpy or pandas dataset's dtype is not correct")
 
     def _transform_dataset (self, retain_numpy_structure : bool, retain_pandas_structure : bool, encoder_instance : TransformerMixin, dataset : Union[numpy.ndarray, pandas.Series, pandas.DataFrame]):
-        if retain_numpy_structure and dataset.ndim > 1:
+        if retain_numpy_structure and self._is_correct_datatype(check_column_datatype=True, dataset=dataset) and dataset.ndim > 1:
             encoded_numpy_dataset = encoder_instance.fit_transform(dataset)
             return encoded_numpy_dataset
 
-        if retain_pandas_structure:
+        if retain_pandas_structure and self._is_correct_datatype(check_column_datatype=True, dataset=dataset):
             if encoder_instance.__class__.__name__ == "OneHotEncoder":
                 temp_ohe_encoding = pandas.DataFrame(encoder_instance.fit_transform(dataset[self.columns]), dataset[self.columns].index, dataset[self.columns].columns)
                 encoded_dataset = pandas.concat([dataset.drop(self.columns, axis=1), temp_ohe_encoding], axis=1)
