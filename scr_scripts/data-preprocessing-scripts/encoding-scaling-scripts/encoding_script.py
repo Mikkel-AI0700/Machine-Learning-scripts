@@ -13,34 +13,22 @@ class EncodeColumns (BaseEstimator, TransformerMixin):
         self.encoder_parameters = encoder_instance_parameters
         self.numpy_output = numpy_output
         self.pandas_output = pandas_output
-
-    def _import_required_dependencies (self):
-        import importlib
-        required_dependencies = [
-            "numpy",
-            "pandas",
-            "sklearn.base.BaseEstimator",
-            "sklearn.base.TransformerMixin",
-            "sklearn.preprocessing.OneHotEncoder",
-            "sklearn.preprocessing.OrdinalEncoder",
-            "sklearn.preprocessing.TargetEncoder",
-            "sklearn.preprocessing.LabelEncoder",
-            "sklearn.preprocessing.LabelBinarizer"
-        ]
-
-        for dependency in required_dependencies:
-            print("[*] Importing: {}".format(dependency))
-            importlib.import_module(dependency)
+        self.encoder_instances = {
+            "ohe" : OneHotEncoder,
+            "ordinal" : OrdinalEncoder,
+            "target" : TargetEncoder,
+            "label" : LabelEncoder,
+            "binarizer" : LabelBinarizer
+        } 
 
     def _is_correct_datatype (self, check_dataset_datatype : bool, check_column_datatype : bool, dataset : Union[numpy.ndarray, pandas.DataFrame]):
         valid_dataset_datatypes = (numpy.ndarray, pandas.Series, pandas.DataFrame)
         valid_column_datatypes = (numpy.object_, numpy.str_, numpy.int8, "category", "string")
 
-        if check_dataset_datatype:
-            if isinstance(dataset, valid_dataset_datatypes):
-                return True
-            else:
-                raise ValueError("[-] Error: Dataset argument is not numpy or pandas")
+        if check_dataset_datatype and isinstance(dataset, valid_dataset_datatypes):
+            return True
+        else:
+            raise ValueError("[-] Error: Dataset argument is not numpy or pandas")
 
         if check_column_datatype:
             if isinstance(dataset, valid_dataset_datatypes[0]) and dataset.dtype in valid_column_datatypes:
@@ -65,18 +53,8 @@ class EncodeColumns (BaseEstimator, TransformerMixin):
                 return dataset
 
     def fit_transform(self, X, y=None):
-        encoder_instances = {
-            "ohe" : OneHotEncoder,
-            "ordinal" : OrdinalEncoder,
-            "target" : TargetEncoder,
-            "label" : LabelEncoder,
-            "binarizer" : LabelBinarizer
-        }
-
-        self._import_required_dependencies()
-
-        if self.encoding_type in encoder_instances.keys() and self._is_correct_datatype(check_dataset_datatype=True, dataset=X):
+        if self.encoding_type in self.encoder_instances.keys() and self._is_correct_datatype(check_dataset_datatype=True, dataset=X):
             encoded_dataset = self._transform_dataset(self.numpy_output, self.pandas_output, encoder_instances.get(self.encoding_type), X)
             return encoded_dataset
         else:
-            raise ValueError("[-] Error: ")
+            raise ValueError("[-] Error: Either encoding argument doesn't exist in the encoder instances or dataset argument contains wrong datatypes")
