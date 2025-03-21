@@ -34,7 +34,8 @@ class InheritorClass:
 
     def _plot(self, axes: Axes, plot_method: Callable[..., Axes]):
         if plot_method.__class__.__name__ in [method.__class__.__name__ for method in [seaborn.histplot, seaborn.kdeplot, seaborn.ecdfplot]]:
-            pass
+            for axes_iteration, column_iteration in enumerate(self.x_vars):
+                plot_method(data=self.dataset, x=column_iteration, ax=axes[axes_iteration], **self.extra_params)
         else:
             for axes_iteration, column_iteration in enumerate(self.y_vars):
                 plot_method(data=self.dataset, x=self.x_vars, y=column_iteration, ax=axes[axes_iteration], **self.extra_params)
