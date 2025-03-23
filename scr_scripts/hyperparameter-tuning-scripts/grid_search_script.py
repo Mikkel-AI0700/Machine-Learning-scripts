@@ -7,12 +7,12 @@ import pandas
 from sklearn.model_selection import GridSearchCV
 
 class TrainUsingGridSearch:
-    def __init__ (self, standard_gridsearch_parameters):
+    def __init__ (self, standard_gridsearch_parameters: Dict[str, Union[int, float]]):
         self.gs_global_instance = GridSearchCV(**standard_gridsearch_parameters)
         self.gridsearch_attributes = {}
         self.model_predictions = {}
 
-    def _distribute_attributes_and_predictions (self, test_dataset_x: Union[numpy.ndarray, pandas.Series, pandas.DataFrame], convert_cv_to_pd: bool):
+    def _distribute_attributes_and_predictions (self, test_dataset_x: Union[numpy.ndarray, pandas.DataFrame], convert_cv_to_pd: bool):
         # ----- Storing the attributes and predictions into tuples to store into dictionary -----
         attributes_to_store = [
             ("gs_best_estimator", self.gs_global_instance.best_estimator_),
@@ -26,7 +26,7 @@ class TrainUsingGridSearch:
         ]
 
         if convert_cv_to_pd:
-            attributes_to_store.append(("gs_cv_results", pd.DataFrame(self.gs_global_instance.cv_results_)))
+            attributes_to_store.append(("gs_cv_results", pandas.DataFrame(self.gs_global_instance.cv_results_)))
         else:
             attributes_to_store.append(("gs_cv_results", self.gs_global_instance.cv_results_))
 
@@ -41,14 +41,14 @@ class TrainUsingGridSearch:
             self.model_predictions.update({model_preds_tuple[0] : model_preds_tuple[1]})
 
     def start_gridsearch_training (
-            self, 
-            train_dataset_x: Union[numpy.ndarray, pandas.Series, pandas.DataFrame], 
-            train_dataset_y: Union[numpy.ndarray, pandas.Series, pandas.DataFrame], 
-            test_dataset_x: Union[numpy.ndarray, pandas.Series, pandas.DataFrame]
-        ):
+        self, 
+        train_dataset_x: Union[numpy.ndarray, pandas.DataFrame], 
+        train_dataset_y: Union[numpy.ndarray, pandas.DataFrame], 
+        test_dataset_x: Union[numpy.ndarray, pandas.DataFrame]
+    ):
         logging.basicConfig(level=logging.INFO)
 
-        if all(dataset != None for dataset in [train_dataset_x, train_dataset_y, test_dataset_x]):
+        if all(dataset == None for dataset in [train_dataset_x, train_dataset_y, test_dataset_x]):
             # ----- Starting GridSearchCV training -----
             logging.info("[*] Starting GridSearchCV training...")
             self.gs_global_instance.fit(train_dataset_x, train_dataset_y)
@@ -57,9 +57,9 @@ class TrainUsingGridSearch:
             self._distribute_attributes(gridsearch_instance, test_dataset_x)
             return self.gridsearch_attributes, self.model_predictions
         else:
-            raise ValueError("[-] Error: One of the datasets is empty. Pass a ndarray or dataframe dataset") 
+            raise ValueError("[!] Error: One of the datasets is empty. Pass a ndarray or dataframe dataset") 
 
-    def reset_model_predictions (self, model_prediction_dictionary):
+    def reset_model_predictions (self, model_prediction_dictionary: Dict[str, Union[numpy.ndarray, pandas.DataFrame]]):
         logging.info("[*] Resetting ML model's predictions")
         model_prediction_dictionary = self.model_predictions
         return model_prediction_dictionary

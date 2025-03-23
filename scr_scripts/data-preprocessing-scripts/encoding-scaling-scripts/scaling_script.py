@@ -10,14 +10,24 @@ from sklearn.preprocessing import StandardScaler, Normalizer, MinMaxScaler, MaxA
 import importlib
 
 class ScaleColumns (BaseEstimator, TransformerMixin):
-    def __init__ (self, columns_to_preprocess: List[str], scaling_preprocessing_type: str, scaler_parameters: dict, numpy_output: bool, pandas_output: bool):
+    def __init__ (
+        self, 
+        columns_to_preprocess: Union[str, List[str]], 
+        scaler_parameters: Dict[str, Union[str, float, numpy.ndarray, pandas.DataFrame]], 
+        scaling_preprocessing_type: str, 
+        numpy_output: bool, 
+        pandas_output: bool
+    ):
         self.columns = columns_to_preprocess
         self.scaler_type = scaling_preprocessing_type
         self.scaler_parameters = scaler_parameters
         self.numpy_output = numpy_output
         self.pandas_output = pandas_output
 
-    def _is_correct_datatype (self, dataset: Union[numpy.ndarray, pandas.Series, pandas.DataFrame]):
+    def _is_correct_datatype (
+        self, 
+        dataset: Union[numpy.ndarray, pandas.DataFrame]
+    ):
         numpy_datatypes = (numpy.int8, numpy.int16, numpy.int32, numpy.int64, numpy.float16, numpy.float32, numpy.float64)
         dataset_datatypes = (numpy.ndarray, pandas.Series, pandas.DataFrame)
 
@@ -28,23 +38,25 @@ class ScaleColumns (BaseEstimator, TransformerMixin):
             return True
 
     def _transform_dataset (
-            self, 
-            retain_numpy: bool, 
-            retain_pandas: bool, 
-            scaler: TransformerMixin, 
-            dataset: Union[numpy.ndarray, pandas.Series, pandas.DataFrame]
-        ):
-            if retain_numpy:
-                return scaler.fit_transform(dataset)
+        self, 
+        retain_numpy: bool, 
+        retain_pandas: bool, 
+        scaler: TransformerMixin, 
+        dataset: Union[numpy.ndarray, pandas.Series, pandas.DataFrame]
+    ):
+        if retain_numpy:
+            return scaler.fit_transform(dataset)
 
-            if retain_pandas:
-                if scaler.__class__.__name__ == "Normalizer":
-                    logging.info("[*] Normalizer detected. Doing Normalizer now.")
-                    dataset = pandas.DataFrame(scaler.fit_transform(dataset.values), dataset.index, dataset.columns)
-                else:
-                    logging.info("[*] {}. Doing {} now".format(scaler.__class__.__name__))
-                    dataset[self.columns] = pandas.DataFrame(scaler.fit_transform(dataframe_copy[self.columns]), dataset[self.columns].index, dataset[self.columns].columns)
-                return dataframe_copy
+        if retain_pandas:
+            if scaler.__class__.__name__ == "Normalizer":
+                logging.info("[*] Normalizer detected. Doing Normalizer now.")
+                dataset = pandas.DataFrame(scaler.fit_transform(dataset.values), dataset.index, dataset.columns)
+            else:
+                logging.info("[*] {}. Doing {} now".format(scaler.__class__.__name__))
+                dataset[self.columns] = pandas.DataFrame(
+                    scaler.fit_transform(dataframe_copy[self.columns]), dataset[self.columns].index, dataset[self.columns].columns
+                )
+            return dataframe_copy
 
     def fit_transform (self, X, y=None):
         logging.basicConfig(level=logging.INFO)
@@ -57,6 +69,7 @@ class ScaleColumns (BaseEstimator, TransformerMixin):
         }
 
         if self.scaler_type in scaler_instances and self._is_correct_datatype(X):
+            logging.info("[*] Passing dataset and other parameters to scaler function...")
             transformed_dataset = self._transform_dataset(self.numpy_output, self.pandas_output, scaler_instances.get(self.scaler_type), X)
             return transformed_dataset
         else:

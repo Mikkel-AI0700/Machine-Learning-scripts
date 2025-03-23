@@ -1,6 +1,6 @@
 
 # WARNING: DO NOT COPY PASTE THE IMPORTS ABOVE CLASS. USE DEPENDENCY IMPORTER
-from typing import *
+from typing import Dict, List, Union
 import logging
 import numpy
 import pandas
@@ -8,14 +8,26 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, TargetEncoder, LabelEncoder, LabelBinarizer
 
 class EncodeColumns (BaseEstimator, TransformerMixin):
-    def __init__ (self, columns_to_preprocess: List[str], encoding_preprocessing_type: str, encoder_instance_parameters: dict, numpy_output: bool, pandas_output: bool):
+    def __init__ (
+        self, 
+        columns_to_preprocess: Union[str, List[str]], 
+        encoder_instance_parameters: Dict[str, Union[str, float, numpy.ndarray, pandas.DataFrame]], 
+        encoding_preprocessing_type: str, 
+        numpy_output: bool, 
+        pandas_output: bool
+    ):
         self.columns = columns_to_preprocess
         self.encoding_type = encoding_preprocessing_type
         self.encoder_parameters = encoder_instance_parameters
         self.numpy_output = numpy_output
         self.pandas_output = pandas_output
 
-    def _is_correct_datatype (self, check_dataset: bool, check_column: bool, dataset: Union[numpy.ndarray, pandas.DataFrame]):
+    def _is_correct_datatype (
+        self, 
+        check_dataset: bool, 
+        check_column: bool, 
+        dataset: Union[numpy.ndarray, pandas.DataFrame]
+    ):
         dataset_datatypes = (numpy.ndarray, pandas.Series, pandas.DataFrame)
         column_datatypes = (numpy.object_, numpy.str_, numpy.int8, "category", "string")
 
@@ -33,12 +45,12 @@ class EncodeColumns (BaseEstimator, TransformerMixin):
                 raise ValueError("[-] Error: Either numpy or pandas dataset's dtype is not correct")
 
     def _transform_dataset (
-            self, 
-            retain_numpy: bool, 
-            retain_pandas: bool, 
-            encoder: TransformerMixin, 
-            dataset: Union[numpy.ndarray, pandas.Series, pandas.DataFrame]
-        ):
+        self, 
+        retain_numpy: bool, 
+        retain_pandas: bool, 
+        encoder: TransformerMixin, 
+        dataset: Union[numpy.ndarray, pandas.DataFrame]
+    ):
         if retain_numpy and self._is_correct_datatype(check_column=True, dataset=dataset) and dataset.ndim > 1:
             logging.info("[*] {} detected. Doing {} now.".format(encoder.__class__.__name__))
             dataset = encoder.fit_transform(dataset)
@@ -67,7 +79,8 @@ class EncodeColumns (BaseEstimator, TransformerMixin):
         }
 
         if self.encoding_type in encoder_instances.keys() and self._is_correct_datatype(check_dataset=True, dataset=X):
-            logging.info("[*] Passing dataset and other parameters now to dataset...")
+            logging.info("[*] Passing dataset and other parameters now to encoder function...")
             encoded_dataset = self._transform_dataset(self.numpy_output, self.pandas_output, encoder_instances.get(self.encoding_type), X)
+            return encoded_dataset
         else:
             raise ValueError("[-] Error: Either encoding argument doesn't exist in the encoder instances or dataset argument contains wrong datatypes")

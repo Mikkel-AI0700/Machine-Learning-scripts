@@ -1,12 +1,12 @@
 
 # WARNING: DO NOT COPY PASTE MODULES ABOVE THE CLASS. USE DEPENDENCY IMPORTER
 
-from typing import List, Union, Dict
+from typing import List, Union, Dict, Callable
 import logging
 import numpy
 import pandas
 import seaborn
-import matplotlib.pyplot
+from matplotlib.pyplot import Axes
 from sklearn.base import BaseEstimator, is_classifier
 from sklearn.model_selection import LearningCurveDisplay, ValidationCurveDisplay
 from sklearn.inspection import DecisionBoundaryDisplay, PartialDependenceDisplay
@@ -28,14 +28,24 @@ class InheritorClass:
         if all(is_classifier(estimator) for estimator in estimator_list):
             return True
 
-    def _plot (self, axes, estimator_list, metric_instance, plot_from_estimators, plot_from_predictions):
+    def _plot (
+        self, 
+        axes: Axes, 
+        estimator_list: Union[BaseEstimator, List[BaseEstimator]], 
+        metric: Callable[Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]], LearningCurveDisplay, ValidationCurveDisplay, ConfusionMatrixDisplay, RocCurveDisplay, PrecisionRecallDisplay, DetCurveDisplay, DecisionBoundaryDisplay, PartialDependenceDisplay], 
+        plot_from_estimators: Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]], 
+        plot_from_predictions: Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]]
+    ):
         axes = axes.flatten()
+
         if plot_from_estimators:
+            logging.info("[*] Plotting {}".format(metric.__class__.__name__))
             for axes_iteration, estimator_iteration in enumerate(estimator_list):
-                metric_instance(estimator=estimator_iteration, ax=axes[axes_iteration], **self.estimator_params)
+                metric.from_estimator(estimator=estimator_iteration, ax=axes[axes_iteration], **self.estimator_params)
 
         if plot_from_predictions:
-            metric_instance(**self.predictions_params)
+            logging.info("[*] Plotting {}".format(metric.__class__.__name__))
+            metric(**self.predictions_params)
 
 class LearningValidationPlot (InheritorClass):
     def __init__ (
