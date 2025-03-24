@@ -9,7 +9,7 @@ from sklearn.base import BaseEstimator
 from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV, RandomizedSearchCV
 
 class TrainUsingRandomSearch:
-    def __init__ (self, standard_randomsearch_parameters: dict, n_iter=10000):
+    def __init__ (self, standard_randomsearch_parameters: Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]], n_iter=10000):
         self.rs_global_instance = RandomizedSearchCV(n_iter=n_iter, **standard_randomsearch_parameters)
         self.randomsearch_attributes = {}
         self.model_prediction_results = {}
@@ -35,11 +35,11 @@ class TrainUsingRandomSearch:
 
         # ----- Looping over the attributes_to_store to store into the self.randomsearch_attributes -----
         for attribute_tuple in attributes_to_store:
-            self.randomsearch_attributes.update({attribute_tuple[0] : attribute_tuple[1]})
+            self.randomsearch_attributes.update({attribute_tuple[0]: attribute_tuple[1]})
 
         # ----- Looping over model predictions array to store into self.model_predictions_to_store -----
         for model_predictions_tuple in model_predictions_to_store:
-            self.model_prediction_results.update({model_predictions_tuple[0] : model_predictions_tuple[1]})
+            self.model_prediction_results.update({model_predictions_tuple[0]: model_predictions_tuple[1]})
 
     def start_randomsearch_training (
         self, 

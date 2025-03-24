@@ -33,12 +33,12 @@ class TrainUsingGridSearch:
         # ----- Storing the attributes into tuples to store into dictionary -----
         logging.info("[*] Storing attributes into dictionary to return")
         for attribute_tuple in attributes_to_store:
-            self.gridsearch_attributes.update({attribute_tuple[0] : attribute_tuple[1]})
+            self.gridsearch_attributes.update({attribute_tuple[0]: attribute_tuple[1]})
 
         # ----- Storing the model's predictions into tuples to store into dictionary -----
         logging.info("[+] Storing GridSearchCV model base and probability predictions...")
         for model_preds_tuple in model_predictions_to_store:
-            self.model_predictions.update({model_preds_tuple[0] : model_preds_tuple[1]})
+            self.model_predictions.update({model_preds_tuple[0]: model_preds_tuple[1]})
 
     def start_gridsearch_training (
         self, 
