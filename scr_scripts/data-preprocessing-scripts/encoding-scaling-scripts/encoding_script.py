@@ -62,7 +62,9 @@ class EncodeColumns (BaseEstimator, TransformerMixin):
         if retain_pandas and self._is_correct_datatype(check_column=True, dataset=dataset):
             if encoder.__class__.__name__ == "OneHotEncoder":
                 logging.info("[*] OneHotEncoder detected. Doing OneHotEncoding now")
-                temp_ohe_dataset = pandas.DataFrame(encoder.fit_transform(dataset[self.columns]), dataset[self.columns].index, dataset[self.columns].columns)
+                temp_ohe_dataset = pandas.DataFrame(
+                    encoder.fit_transform(dataset[self.columns]), dataset[self.columns].index, dataset[self.columns].columns
+                )
                 dataset = pandas.concat([dataset.drop(self.columns, axis=1), temp_ohe_dataset], axis=1)
                 return dataset
             else:
