@@ -40,8 +40,6 @@ class ImportRequiredDependencies:
             logging.warn("[!] Failed to import: {} | {}".format(dependency, non_existent_module))
 
     def import_through_selection (self, dependency_type: str, required_dependencies: List[str]):
-        logging.basicConfig(level=logging.INFO)
-
         dependency_map = {
             "general": self.general_dependencies,
             "scaler": self.scaler_dependencies,
