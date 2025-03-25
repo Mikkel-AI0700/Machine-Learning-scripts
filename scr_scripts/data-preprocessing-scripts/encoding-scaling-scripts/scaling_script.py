@@ -7,7 +7,8 @@ import pandas
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import StandardScaler, Normalizer, MinMaxScaler, MaxAbsScaler
 
-import importlib
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 class ScaleColumns (BaseEstimator, TransformerMixin):
     def __init__ (
@@ -59,8 +60,6 @@ class ScaleColumns (BaseEstimator, TransformerMixin):
             return dataframe_copy
 
     def fit_transform (self, X, y=None):
-        logging.basicConfig(level=logging.INFO)
-
         scaler_instances = {
             "standard" : StandardScaler(**(self.scaler_parameters or {})),
             "minmax" : MinMaxScaler(**(self.scaler_parameters or {})),

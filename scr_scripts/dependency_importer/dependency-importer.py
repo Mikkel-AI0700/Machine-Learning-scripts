@@ -1,8 +1,13 @@
 
 # WARNING: DO NOT COPY PASTE THE IMPORTS ABOVE CLASS. USE DEPENDENCY IMPORTER
-from typing import *
+# importlib and loggine IS AN EXCEPTION AS importlib WILL DYNAMICALLY IMPORT ALL THE REQUIRED MODULES AND logging WILL LOG THE MESSAGES
+
+from typing import List, Dict
 import logging
 import importlib
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 class ImportRequiredDependencies:
     def __init__ (self):
@@ -30,13 +35,27 @@ class ImportRequiredDependencies:
             "GridSearch": "sklearn.model_selection.GridSearchCV",
             "RandomizedSearch": "sklearn.model_selection.RandomizedSearchCV"
         }
+        self.visual_model_selection = {
+            "LearningCurveDisplay": "sklearn.model_selection.LearningCurveDisplay",
+            "ValidationCurveDisplay": "sklearn.model_selection.ValidationCurveDisplay"
+        }
+        self.visual_model_metrics = {
+            "ConfusionMatrixDisplay": "sklearn.metrics.ConfusionMatrixDisplay",
+            "RocCurveDisplay": "sklearn.metrics.RocCurveDisplay",
+            "PrecisionRecallDisplay": "sklearn.metrics.PrecisionRecallDisplay",
+            "DetCurveDisplay": "sklearn.metrics.DetCurveDisplay"
+        }
+        self.visual_model_inspection = {
+            "DecisionBoundaryDisplay": "sklearn.inspection.DecisionBoundaryDisplay",
+            "PartialDependenceDisplay": "sklearn.inspection.PartialDependenceDisplay"
+        }
 
-    def _import_dependencies (self, dependency_list: List[str], dependency_dictionary: dict):
+    def _import_dependencies (self, dependency_list: List[str], dependency_dictionary: Dict[str, str]):
         try:
             for dependency in [dependency_dictionary.get(dependency) for dependency in dependency_list]:
                 logging.info("[*] Importing: {}".format(dependency))
                 importlib.import_module(dependency)
-        except ImportError as non_existent_module:
+        except ImportWarning as non_existent_module:
             logging.warn("[!] Failed to import: {} | {}".format(dependency, non_existent_module))
 
     def import_through_selection (self, dependency_type: str, required_dependencies: List[str]):
@@ -44,11 +63,14 @@ class ImportRequiredDependencies:
             "general": self.general_dependencies,
             "scaler": self.scaler_dependencies,
             "encoders": self.encoder_dependencies,
-            "tuners": self.tuner_dependencies
+            "tuners": self.tuner_dependencies,
+            "selection": self.visual_model_selection,
+            "metrics": self.visual_model_metrics,
+            "inspection": self.visual_model_inspection
         }
 
         if dependency_type in dependency_map.keys():
-            logging.info("[*] Passing the required dependencies to the importer...")
+            logging.info("[*] Passing the required dependencies to the importer...\n")
             self._import_dependencies(required_dependencies, dependency_map.get(dependency_type))
         else:
             logging.critical("[!] Critical: Argument does not exist in dependency_map keys. Argument: {}".format(dependency_type))

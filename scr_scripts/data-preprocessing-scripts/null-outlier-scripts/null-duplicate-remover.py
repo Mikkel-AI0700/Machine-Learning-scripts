@@ -7,6 +7,9 @@ import pandas
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.impute import SimpleImputer, KNNImputer
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 class RemoveNull (BaseEstimator, TransformerMixin):
     def __init__ (self, columns_to_preprocess: List[str], removal_type: str, numpy_output: bool, pandas_output: bool, imputer_parameters: dict, null_amount_threshold: int):
         self.columns = columns_to_preprocess
@@ -17,14 +20,14 @@ class RemoveNull (BaseEstimator, TransformerMixin):
         self.imputer_params = imputer_parameters
 
     def _transform_dataset (
-            self, 
-            retain_numpy: bool, 
-            retain_pandas: bool, 
-            drop_nan: bool, 
-            drop_duplicates: bool,
-            imputer: TransformerMixin, 
-            dataset: Union[numpy.ndarray, pandas.Series, pandas.DataFrame]
-        ):
+        self, 
+        retain_numpy: bool, 
+        retain_pandas: bool, 
+        drop_nan: bool, 
+        drop_duplicates: bool,
+        imputer: TransformerMixin, 
+        dataset: Union[numpy.ndarray, pandas.Series, pandas.DataFrame]
+    ):
         if drop_nan:
             if retain_numpy:
                 dataset = dataset[:, ~numpy.isnan(dataset).sum(axis=0) > self.null_threshold]
@@ -48,8 +51,6 @@ class RemoveNull (BaseEstimator, TransformerMixin):
             return dataset
 
     def fit_transform (self, X, y=None):
-        logging.basicConfig(level=logging.INFO)
-
         imputer_instances = {
             "simple": SimpleImputer(**self.imputer_params or {}),
             "knn": KNNImputer(**self.imputer_params or {})

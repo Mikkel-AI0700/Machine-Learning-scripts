@@ -6,6 +6,9 @@ import numpy
 import pandas
 from sklearn.model_selection import GridSearchCV
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 class TrainUsingGridSearch:
     def __init__ (self, standard_gridsearch_parameters: Dict[str, Union[int, float]]):
         self.gs_global_instance = GridSearchCV(**standard_gridsearch_parameters)
@@ -33,12 +36,12 @@ class TrainUsingGridSearch:
         # ----- Storing the attributes into tuples to store into dictionary -----
         logging.info("[*] Storing attributes into dictionary to return")
         for attribute_tuple in attributes_to_store:
-            self.gridsearch_attributes.update({attribute_tuple[0] : attribute_tuple[1]})
+            self.gridsearch_attributes.update({attribute_tuple[0]: attribute_tuple[1]})
 
         # ----- Storing the model's predictions into tuples to store into dictionary -----
         logging.info("[+] Storing GridSearchCV model base and probability predictions...")
         for model_preds_tuple in model_predictions_to_store:
-            self.model_predictions.update({model_preds_tuple[0] : model_preds_tuple[1]})
+            self.model_predictions.update({model_preds_tuple[0]: model_preds_tuple[1]})
 
     def start_gridsearch_training (
         self, 
@@ -46,8 +49,6 @@ class TrainUsingGridSearch:
         train_dataset_y: Union[numpy.ndarray, pandas.DataFrame], 
         test_dataset_x: Union[numpy.ndarray, pandas.DataFrame]
     ):
-        logging.basicConfig(level=logging.INFO)
-
         if all(dataset == None for dataset in [train_dataset_x, train_dataset_y, test_dataset_x]):
             # ----- Starting GridSearchCV training -----
             logging.info("[*] Starting GridSearchCV training...")
