@@ -1,8 +1,13 @@
 
 # WARNING: DO NOT COPY PASTE THE IMPORTS ABOVE CLASS. USE DEPENDENCY IMPORTER
+# importlib and loggine IS AN EXCEPTION AS importlib WILL DYNAMICALLY IMPORT ALL THE REQUIRED MODULES AND logging WILL LOG THE MESSAGES
+
 from typing import List, Dict
 import logging
 import importlib
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 class ImportRequiredDependencies:
     def __init__ (self):
@@ -50,12 +55,10 @@ class ImportRequiredDependencies:
             for dependency in [dependency_dictionary.get(dependency) for dependency in dependency_list]:
                 logging.info("[*] Importing: {}".format(dependency))
                 importlib.import_module(dependency)
-        except ImportError as non_existent_module:
+        except ImportWarning as non_existent_module:
             logging.warn("[!] Failed to import: {} | {}".format(dependency, non_existent_module))
 
     def import_through_selection (self, dependency_type: str, required_dependencies: List[str]):
-        logging.basicConfig(level=logging.INFO)
-
         dependency_map = {
             "general": self.general_dependencies,
             "scaler": self.scaler_dependencies,
@@ -67,7 +70,7 @@ class ImportRequiredDependencies:
         }
 
         if dependency_type in dependency_map.keys():
-            logging.info("[*] Passing the required dependencies to the importer...")
+            logging.info("[*] Passing the required dependencies to the importer...\n")
             self._import_dependencies(required_dependencies, dependency_map.get(dependency_type))
         else:
             logging.critical("[!] Critical: Argument does not exist in dependency_map keys. Argument: {}".format(dependency_type))

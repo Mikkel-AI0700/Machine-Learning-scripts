@@ -7,6 +7,9 @@ import pandas
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, TargetEncoder, LabelEncoder, LabelBinarizer
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 class EncodeColumns (BaseEstimator, TransformerMixin):
     def __init__ (
         self, 
@@ -68,8 +71,6 @@ class EncodeColumns (BaseEstimator, TransformerMixin):
                 return dataset
 
     def fit_transform(self, X, y=None):
-        logging.basicConfig(level=logging.INFO)
-
         encoder_instances = {
             "ohe": OneHotEncoder(**self.encoder_parameters or {}),
             "ordinal": OrdinalEncoder(**self.encoder_parameters or {}),

@@ -8,6 +8,9 @@ from typing import Union, List, Dict
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV, RandomizedSearchCV
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 class TrainUsingRandomSearch:
     def __init__ (self, standard_randomsearch_parameters: Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]], n_iter=10000):
         self.rs_global_instance = RandomizedSearchCV(n_iter=n_iter, **standard_randomsearch_parameters)
@@ -47,8 +50,6 @@ class TrainUsingRandomSearch:
         train_dataset_y: Union[numpy.ndarray, pandas.DataFrame], 
         test_dataset_x: Union[numpy.ndarray, pandas.DataFrame]
     ):
-        logging.basicConfig(level=logging.INFO)
-
         if all(dataset == None for dataset in [train_dataset_x, train_dataset_y, test_dataset_x]): 
             # ----- Creating instance of RandomizedSearchCV, fitting with self.standard_parameters -----
             print("[+] Starting RandomizedSearchCV training")

@@ -6,6 +6,9 @@ import numpy
 import pandas
 from sklearn.model_selection import GridSearchCV
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 class TrainUsingGridSearch:
     def __init__ (self, standard_gridsearch_parameters: Dict[str, Union[int, float]]):
         self.gs_global_instance = GridSearchCV(**standard_gridsearch_parameters)
@@ -46,8 +49,6 @@ class TrainUsingGridSearch:
         train_dataset_y: Union[numpy.ndarray, pandas.DataFrame], 
         test_dataset_x: Union[numpy.ndarray, pandas.DataFrame]
     ):
-        logging.basicConfig(level=logging.INFO)
-
         if all(dataset == None for dataset in [train_dataset_x, train_dataset_y, test_dataset_x]):
             # ----- Starting GridSearchCV training -----
             logging.info("[*] Starting GridSearchCV training...")
