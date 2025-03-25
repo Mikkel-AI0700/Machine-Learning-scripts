@@ -7,6 +7,9 @@ import pandas
 import seaborn
 from matplotlib.pyplot import subplots, Axes
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 class InheritorClass:
     def __init__ (
         self,
