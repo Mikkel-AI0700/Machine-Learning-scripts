@@ -26,9 +26,9 @@ class InheritorClass:
         self.extra_params = kwargs
 
     def _calculate_row_amount (self, column_border=3):
-        column_amount = len(column_border)
+        column_amount = max(len(self.x_vars), len(self.y_vars))
         row_amount = (column_amount // column_border) + (column_amount % column_border > 0)
-        return row_amount, column_amount
+        return row_amount, min(column_amount, column_border)
 
     def _initialize_figure_axes (self):
         row_amount, column_amount = self._calculate_row_amount()
