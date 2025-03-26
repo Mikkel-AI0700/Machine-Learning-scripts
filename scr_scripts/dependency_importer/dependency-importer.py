@@ -55,8 +55,9 @@ class ImportRequiredDependencies:
             for dependency in [dependency_dictionary.get(dependency) for dependency in dependency_list]:
                 logging.info("[*] Importing: {}".format(dependency))
                 importlib.import_module(dependency)
-        except ImportWarning as non_existent_module:
-            logging.warn("[!] Failed to import: {} | {}".format(dependency, non_existent_module))
+        except AttributeError as non_existent_module:
+            logging.error("[!] Error: Module doesn't exist in the dependency dictionary.")
+            raise ValueError("[!] Error: Module doesn't exist in the dependency dictionary.")
 
     def import_through_selection (self, dependency_type: str, required_dependencies: List[str]):
         dependency_map = {
@@ -74,5 +75,5 @@ class ImportRequiredDependencies:
             self._import_dependencies(required_dependencies, dependency_map.get(dependency_type))
         else:
             logging.critical("[!] Critical: Argument does not exist in dependency_map keys. Argument: {}".format(dependency_type))
-            raise ValueError("[-] Critical: Dependency type argument does not exist in the dictionary map")
+            raise ValueError("[!] Critical: Dependency type argument does not exist in the dictionary map")
 
