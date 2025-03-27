@@ -33,7 +33,7 @@ class InheritorClass:
         figure, axes = matplotlib.pyplot.subplots(nrows=row_amount, ncols=column_amount, figsize=(26.5, 15.5))
         return figure, axes
 
-    def _plot(self, axes: Axes, plot_method: Callable[..., Axes]):
+    def _plot(self, axes: matplotlib.pyplot.Axes, plot_method: Callable[..., Axes]):
         axes = axes.flatten()
 
         if plot_method in [seaborn.histplot, seaborn.kdeplot, seaborn.ecdfplot]:
