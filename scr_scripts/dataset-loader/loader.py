@@ -9,10 +9,11 @@ import pandas
 import ucimlrepo
 
 class LoadDataset:
-    def __init__ (self, uci_id: int, load_method: str, filesystem_path: str):
+    def __init__ (self, uci_id: int, load_method: str, filesystem_path: str, **kwargs):
         self.uci_id = uci_id
         self.loader_method = load_method
         self.fs_path = filesystem_path
+        self.extra_params = kwargs
         self.loader_methods = {
             "csv": pandas.read_csv,
             "xlsx": pandas.read_excel,
@@ -27,33 +28,23 @@ class LoadDataset:
 
     def _load_pandas (self):
         loader = self._get_loading_method()
-        temp_dictionary = {}
 
         if os.path.exists(self.fs_path):
-            dataset_list = [
-                ("main_df", loader(self.fs_path)), 
-                ("copy_df", loader(self.fs_path).copy()), 
-                ("numpy_df", loader(self.fs_path).to_numpy())
-            ]
-
-            for dataset_tuple in dataset_list:
-                temp_dictionary.update({dataset_tuple[0]: dataset_tuple[1]})
-            return temp_dictionary
+            return {
+                "main_df": loader(self.fs_path, **self.extra_params),
+                "copy_df": loader(self.fs_path, **self.extra_params).copy(),
+                "numpy_df": loader(self.fs_path, **self.extra_params).to_numpy()
+            }
 
     def _load_uci (self):
         loader = self._get_loading_method()
-        temp_dictionary = {}
         temporary_dataset = loader(id=self.uci_id)
 
-        dataset_list = [
-            ("main_df", pandas.DataFrame(temporary_dataset.data.original)),
-            ("copy_df", pandas.DataFrame(temporary_dataset.data.original).copy()),
-            ("numpy_df", pandas.DataFrame(temporary_dataset.data.original).to_numpy())
-        ]
-
-        for dataset_tuple in dataset_list:
-            temp_dictionary.update({dataset_tuple[0]: dataset_tuple[1]})
-        return temp_dictionary
+        return {
+            "main_df": pandas.DataFrame(temporary_dataset.data.original, **self.extra_params),
+            "copy_df": pandas.DataFrame(temporary_dataset.data.original, **self.extra_params).copy(),
+            "numpy_df": pandas.DataFrame(temporary_dataset.data.original, **self.extra_params).to_numpy()
+        }
 
     def load (self, load_uci: bool, load_pandas: bool):
         if load_uci:
