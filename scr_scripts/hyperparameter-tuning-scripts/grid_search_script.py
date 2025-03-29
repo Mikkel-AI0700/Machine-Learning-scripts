@@ -11,37 +11,28 @@ logger.setLevel(logging.INFO)
 
 class TrainUsingGridSearch:
     def __init__ (self, standard_gridsearch_parameters: Dict[str, Union[int, float]]):
-        self.gs_global_instance = GridSearchCV(**standard_gridsearch_parameters)
+        self.gs_instance = GridSearchCV(**standard_gridsearch_parameters)
         self.gridsearch_attributes = {}
         self.model_predictions = {}
 
     def _distribute_attributes_and_predictions (self, test_dataset_x: Union[numpy.ndarray, pandas.DataFrame], convert_cv_to_pd: bool):
         # ----- Storing the attributes and predictions into tuples to store into dictionary -----
-        attributes_to_store = [
-            ("gs_best_estimator", self.gs_global_instance.best_estimator_),
-            ("gs_best_score", self.gs_global_instance.best_score_),
-            ("gs_best_params", self.gs_global_instance.best_params_),
-            ("gs_best_scores", self.gs_global_instance.scorer_)
-        ]
-        model_predictions_to_store = [
-            ("model_base_predictions", self.gs_global_instance.predict(test_dataset_x)),
-            ("model_proba_predictions", self.gs_global_instance.predict_proba(test_dataset_x))
-        ]
+        self.gridsearch_attributes = {
+            "best_estimator": self.gs_instance.best_estimator_,
+            "best_scores": self.gs_instance.best_score_,
+            "best_params": self.gs_instance.best_params_,
+            "scores": self.gs_instance.scorer_
+        }
+        self.model_predictions = {
+            "base_preds": self.gs_instance.predict(test_dataset_x),
+            "proba_preds": self.gs_instance.predict_proba(test_dataset_x),
+            "proba_log_preds": self.gs_instance.predict_log_proba(test_dataset_x)
+        }
 
         if convert_cv_to_pd:
-            attributes_to_store.append(("gs_cv_results", pandas.DataFrame(self.gs_global_instance.cv_results_)))
+            self.gridsearch_attributes.update({"cv_results": pandas.DataFrame(self.gs_instance.cv_results_)})
         else:
-            attributes_to_store.append(("gs_cv_results", self.gs_global_instance.cv_results_))
-
-        # ----- Storing the attributes into tuples to store into dictionary -----
-        logging.info("[*] Storing attributes into dictionary to return")
-        for attribute_tuple in attributes_to_store:
-            self.gridsearch_attributes.update({attribute_tuple[0]: attribute_tuple[1]})
-
-        # ----- Storing the model's predictions into tuples to store into dictionary -----
-        logging.info("[+] Storing GridSearchCV model base and probability predictions...")
-        for model_preds_tuple in model_predictions_to_store:
-            self.model_predictions.update({model_preds_tuple[0]: model_preds_tuple[1]})
+            self.gridsearch_attributes.update({"cv_results": self.gs_instance.cv_results_})
 
     def start_gridsearch_training (
         self, 
@@ -52,7 +43,7 @@ class TrainUsingGridSearch:
         if all(dataset == None for dataset in [train_dataset_x, train_dataset_y, test_dataset_x]):
             # ----- Starting GridSearchCV training -----
             logging.info("[*] Starting GridSearchCV training...")
-            self.gs_global_instance.fit(train_dataset_x, train_dataset_y)
+            self.gs_instance.fit(train_dataset_x, train_dataset_y)
 
             # ----- Distributing the gridsearch attributes into the dictionaries -----
             self._distribute_attributes(gridsearch_instance, test_dataset_x)
