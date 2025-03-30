@@ -12,7 +12,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 class LoadDataset:
-    def __init__ (self, uci_id: int, load_method: str, filesystem_path: str, **kwargs):
+    def __init__ (self, uci_id: int=None, load_method: str=None, filesystem_path: str=None, **kwargs):
         self.uci_id = uci_id
         self.loader_method = load_method
         self.fs_path = filesystem_path
