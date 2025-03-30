@@ -15,6 +15,7 @@ class ImportRequiredDependencies:
             "logging": "logging",
             "numpy": "numpy",
             "pandas": "pandas",
+            "uci": "ucimlrepo",
             "seaborn": "seaborn",
             "matplotlib": "matplotlib.pyplot"
         }
@@ -50,14 +51,13 @@ class ImportRequiredDependencies:
             "PartialDependenceDisplay": "sklearn.inspection.PartialDependenceDisplay"
         }
 
-    def _import_dependencies (self, dependency_list: List[str], dependency_dictionary: Dict[str, str]):
+    def _import_dependencies (self, module_list: List[str], module_dictionary: Dict[str, str]):
         try:
-            for dependency in [dependency_dictionary.get(dependency) for dependency in dependency_list]:
-                logging.info("[*] Importing: {}".format(dependency))
-                importlib.import_module(dependency)
+            for (module_name, module_import) in zip(module_list, [module_dictionary.get(module) for module in module_list]):
+                logging.info("[*] Imported: {}".format(module_name))
+                globals()[module_name] = importlib.import_module(module_import)
         except AttributeError as non_existent_module:
-            logging.error("[!] Error: Module doesn't exist in the dependency dictionary.")
-            raise ValueError("[!] Error: Module doesn't exist in the dependency dictionary.")
+            logging.error("[!] Error: Non existent module: {}".format())
 
     def import_through_selection (self, dependency_type: str, required_dependencies: List[str]):
         dependency_map = {
