@@ -8,6 +8,9 @@ import logging
 import pandas
 import ucimlrepo
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 class LoadDataset:
     def __init__ (self, uci_id: int, load_method: str, filesystem_path: str, **kwargs):
         self.uci_id = uci_id
@@ -46,10 +49,13 @@ class LoadDataset:
             "numpy_df": pandas.DataFrame(temporary_dataset.data.original, **self.extra_params).to_numpy()
         }
 
-    def load (self, load_uci: bool, load_pandas: bool):
-        if load_uci:
+    def load (self, use_uci: bool, use_pandas: bool):
+        if use_uci:
+            logging.info("[*] Creating three datasets using pandas")
             dataset_dictionary = self._load_uci()
-        if load_pandas:
+        if use_pandas:
+            logging.info("[*] Creating three datasets using ucimlrepo")
             dataset_dictionary = self._load_pandas()
+
         return dataset_dictionary
 
