@@ -1,8 +1,10 @@
 
 # WARNING: DO NOT COPY PASTE THE IMPORTS ABOVE CLASS. USE DEPENDENCY IMPORTER
-# importlib and loggine IS AN EXCEPTION AS importlib WILL DYNAMICALLY IMPORT ALL THE REQUIRED MODULES AND logging WILL LOG THE MESSAGES
+# importlib and logging IS AN EXCEPTION AS importlib WILL DYNAMICALLY IMPORT ALL THE REQUIRED MODULES AND logging WILL LOG THE MESSAGES
+# The typing module imports will remain the same. List, Dict, Union in this class will serve as a universal import
+# Including the typing module inside the dictionary dependencies will only pollute it
 
-from typing import List, Dict
+from typing import List, Dict, Union
 import logging
 import importlib
 
@@ -57,7 +59,7 @@ class ImportRequiredDependencies:
                 logging.info("[*] Imported: {}".format(module_name))
                 globals()[module_name] = importlib.import_module(module_import)
         except AttributeError as non_existent_module:
-            logging.error("[!] Error: Non existent module: {}".format())
+            logging.error("[!] Error: Non existent module: {}".format(non_existent_module))
 
     def import_through_selection (self, dependency_type: str, required_dependencies: List[str]):
         dependency_map = {
