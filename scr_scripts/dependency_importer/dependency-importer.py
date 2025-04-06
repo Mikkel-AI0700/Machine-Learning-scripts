@@ -12,7 +12,12 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 class ImportRequiredDependencies:
-    def import_through_selection (self, standard_module: bool, sklearn_module: bool, package_module: str, modules_to_import: List[str]):
+    def import_through_selection (
+        self, standard_module: bool = False, 
+        sklearn_module: bool = False, 
+        package_module: str = None, 
+        modules_to_import: List[str] = None
+    ):
         """
         Dynamically imports modules. Inserts dynamically imported modules inside globals()
 
