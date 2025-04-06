@@ -25,7 +25,7 @@ class LoadDataset:
         load_method (str): Option that will get a function reference that will load the dataset
         filesystem_path (str): Filesystem path that points to the dataset file
     """
-    def __init__ (self, uci_id: int=None, load_method: str=None, filesystem_path: str=None, **kwargs):
+    def __init__ (self, uci_id: int = None, load_method: str = None, filesystem_path: str = None, **kwargs):
         self.uci_id = uci_id
         self.loader_method = load_method
         self.fs_path = filesystem_path
@@ -94,7 +94,7 @@ class LoadDataset:
         }
         return self.datasets
 
-    def load (self, use_uci: bool, use_pandas: bool):
+    def load (self, use_uci: bool = False, use_pandas: bool = False):
         """
         Method that allows the user to choose wether to load datasets via Pandas or ucimlrepo
 
@@ -114,7 +114,7 @@ class LoadDataset:
 
         return dataset_dictionary
 
-    def reset_datasets (self, dataset_dict: Dict[str, Union[numpy.ndarray, pandas.DataFrame]]):
+    def reset_datasets (self, dataset_dict: Dict[str, Union[numpy.ndarray, pandas.DataFrame]] = None):
         """
         Method will reset the datasets dictionary should the datasets dictionary gets messed up
 
