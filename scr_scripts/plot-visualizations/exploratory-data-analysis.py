@@ -11,11 +11,20 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 class InheritorClass:
+    """
+    Parent class that will be the class where the child classes will get the
+    dataset, x variables, y_variables, and other keyword arguments
+
+    Parameters:
+        dataset (numpy.ndarray, pandas.DataFrame): Dataset to plot
+        x_vars (Union[str, List[str]]): List of x variables to plot on x axis
+        y_vars (Union[str, List[str]]): List of y variables to plot on y axis
+    """
     def __init__ (
         self,
-        dataset: Union[numpy.ndarray, pandas.DataFrame],
-        x_vars: Union[str, List[str]],
-        y_vars: Union[str, List[str]],
+        dataset: Union[numpy.ndarray, pandas.DataFrame] = None,
+        x_vars: Union[str, List[str]] = None,
+        y_vars: Union[str, List[str]] = None,
         **kwargs
     ):
         self.dataset = dataset
@@ -23,7 +32,18 @@ class InheritorClass:
         self.y_vars = y_vars
         self.extra_params = kwargs
 
-    def _calculate_row_amount (self, displot_type: bool, column_border=3):
+    def _calculate_row_amount (self, displot_type: bool = False, column_border: int = 3):
+        """
+        Protected method will calculate the amount of rows depending on plotting type
+
+        Parameters:
+            displot_type (bool): Set to True if plotting type is distributional
+            column_border (int): The maximum amount of columns to create regardless of plot type
+
+        Returns:
+            row_amount (int): Amount of rows to create by plt.subplots
+            element_length, column_border (int): Amount of columns to create by plt.subplots
+        """
         if displot_type:
             element_length = len(self.x_vars)
         else:
@@ -32,12 +52,12 @@ class InheritorClass:
         row_amount = (element_length // column_border) + (element_length % column_border > 0)
         return row_amount, min(element_length, column_border)
 
-    def _initialize_figure_axes (self, displot_type: bool):
+    def _initialize_figure_axes (self, displot_type: bool = False):
         row_amount, column_amount = self._calculate_row_amount(displot_type=displot_type)
         figure, axes = matplotlib.pyplot.subplots(nrows=row_amount, ncols=column_amount, figsize=(25.5, 7.5))
         return figure, axes
 
-    def _plot(self, axes, plot_method):
+    def _plot(self, axes = None, plot_method = None):
         axes = axes.flatten()
 
         if plot_method in [seaborn.histplot, seaborn.kdeplot, seaborn.ecdfplot]:
@@ -50,9 +70,9 @@ class InheritorClass:
 class RelationalPlots (InheritorClass):
     def __init__ (
         self,
-        dataset: Union[numpy.ndarray, pandas.DataFrame],
-        x_vars: Union[str, List[str]],
-        y_vars: Union[str, List[str]],
+        dataset: Union[numpy.ndarray, pandas.DataFrame] = None,
+        x_vars: Union[str, List[str]] = None,
+        y_vars: Union[str, List[str]] = None,
         **kwargs
     ):
         super().__init__(dataset, x_vars, y_vars, **kwargs)
@@ -61,7 +81,7 @@ class RelationalPlots (InheritorClass):
             "scatter": seaborn.scatterplot
         }
 
-    def plot_relational (self, relplot_type: str):
+    def plot_relational (self, relplot_type: str = None):
         figure, axes = self._initialize_figure_axes(displot_type=False)
 
         if relplot_type in self.relplot_methods.keys():
@@ -73,9 +93,9 @@ class RelationalPlots (InheritorClass):
 class DistributionalPlots (InheritorClass):
     def __init__ (
         self,
-        dataset: Union[numpy.ndarray, pandas.DataFrame],
-        x_vars: Union[str, List[str]],
-        y_vars: Union[str, List[str]],
+        dataset: Union[numpy.ndarray, pandas.DataFrame] = None,
+        x_vars: Union[str, List[str]] = None,
+        y_vars: Union[str, List[str]] = None,
         **kwargs
     ):
         super().__init__(dataset, x_vars, y_vars, **kwargs)
@@ -85,7 +105,7 @@ class DistributionalPlots (InheritorClass):
             "ecdf": seaborn.ecdfplot
         }
 
-    def plot_distributional (self, displot_type: str):
+    def plot_distributional (self, displot_type: str = None):
         figure, axes = self._initialize_figure_axes(displot_type=True)
 
         if displot_type in self.displot_methods.keys():
@@ -98,9 +118,9 @@ class DistributionalPlots (InheritorClass):
 class CategoricalPlots (InheritorClass):
     def __init__ (
         self,
-        dataset: Union[numpy.ndarray, pandas.DataFrame],
-        x_vars: Union[str, List[str]],
-        y_vars: Union[str, List[str]],
+        dataset: Union[numpy.ndarray, pandas.DataFrame] = None,
+        x_vars: Union[str, List[str]] = None,
+        y_vars: Union[str, List[str]] = None,
         **kwargs
     ):
         super().__init__(dataset, x_vars, y_vars, **kwargs)
@@ -113,7 +133,7 @@ class CategoricalPlots (InheritorClass):
             "count": seaborn.countplot
         }
 
-    def plot_categorical (self, catplot_type: str):
+    def plot_categorical (self, catplot_type: str = None):
         figure, axes = self._initialize_figure_axes(displot_type=False)
 
         if catplot_type in self.catplot_methods.keys():
