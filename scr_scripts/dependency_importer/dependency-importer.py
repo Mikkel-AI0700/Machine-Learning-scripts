@@ -12,7 +12,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 class ImportRequiredDependencies:
-    def import_through_selection (self, standard_module: bool, sklearn_module: bool, module: str, modules_to_import: Dict[str, str]):
+    def import_through_selection (self, standard_module: bool, sklearn_module: bool, package_module: str, modules_to_import: List[str]):
         """
         Dynamically imports modules. Inserts dynamically imported modules inside globals()
 
@@ -27,14 +27,14 @@ class ImportRequiredDependencies:
         """
         try:
             if standard_module:
-                for (mod_name, mod_import) in modules_to_import.items():
-                    logging.info("[*] Importing module: {}".format(mod_name))
-                    globals()[mod_name] = importlib.import_module(mod_import)
+                for module in modules_to_import:
+                    logging.info("[*] Importing module: {}".format(module))
+                    globals()[module] = importlib.import_module(module)
             if sklearn_module:
-                for (mod_name, mod_import) in modules_to_import.items():
-                    logging.info("[*] Importing {}".format(mod_name))
-                    globals()[mod_name] = getattr(importlib.import_module(module), mod_import)
-        except AttributeError as non_existent_module:
-            logging.error("[!] Error: Non existent module: {}".format(non_existent_module))
+                for module in modules_to_import:
+                    logging.info("[*] Importing {}".format(module))
+                    globals()[module] = getattr(importlib.import_module(package_module), module)
+        except ModuleNotFoundError as non_existent_module:
+            logging.error("[!] Error: {}".format(non_existent_module))
             exit(1)
 
