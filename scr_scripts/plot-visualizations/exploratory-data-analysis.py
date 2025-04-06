@@ -19,21 +19,25 @@ class InheritorClass:
         **kwargs
     ):
         self.dataset = dataset
-        self.x_vars = x_vars if isinstance(x_vars, list) else [x_vars]
-        self.y_vars = y_vars if isinstance(y_vars, list) else [y_vars]
+        self.x_vars = x_vars
+        self.y_vars = y_vars
         self.extra_params = kwargs
 
-    def _calculate_row_amount (self, column_border=3):
-        column_amount = max(len(self.x_vars), len(self.y_vars))
-        row_amount = (column_amount // column_border) + (column_amount % column_border > 0)
-        return row_amount, min(column_amount, column_border)
+    def _calculate_row_amount (self, displot_type: bool, column_border=3):
+        if displot_type:
+            element_length = len(self.x_vars)
+        else:
+            element_length = len(self.y_vars)
 
-    def _initialize_figure_axes (self):
-        row_amount, column_amount = self._calculate_row_amount()
-        figure, axes = matplotlib.pyplot.subplots(nrows=row_amount, ncols=column_amount, figsize=(26.5, 15.5))
+        row_amount = (element_length // column_border) + (element_length % column_border > 0)
+        return row_amount, min(element_length, column_border)
+
+    def _initialize_figure_axes (self, displot_type: bool):
+        row_amount, column_amount = self._calculate_row_amount(displot_type=displot_type)
+        figure, axes = matplotlib.pyplot.subplots(nrows=row_amount, ncols=column_amount, figsize=(25.5, 7.5))
         return figure, axes
 
-    def _plot(self, axes: matplotlib.pyplot.Axes, plot_method: Callable[..., Axes]):
+    def _plot(self, axes, plot_method):
         axes = axes.flatten()
 
         if plot_method in [seaborn.histplot, seaborn.kdeplot, seaborn.ecdfplot]:
@@ -58,7 +62,7 @@ class RelationalPlots (InheritorClass):
         }
 
     def plot_relational (self, relplot_type: str):
-        figure, axes = self._initialize_figure_axes()
+        figure, axes = self._initialize_figure_axes(displot_type=False)
 
         if relplot_type in self.relplot_methods.keys():
             logging.info("[*] Passing arguments to plot function...")
@@ -82,7 +86,7 @@ class DistributionalPlots (InheritorClass):
         }
 
     def plot_distributional (self, displot_type: str):
-        figure, axes = self._initialize_figure_axes()
+        figure, axes = self._initialize_figure_axes(displot_type=True)
 
         if displot_type in self.displot_methods.keys():
             logging.info("[*] Passing arguments to plot function...")
@@ -110,7 +114,7 @@ class CategoricalPlots (InheritorClass):
         }
 
     def plot_categorical (self, catplot_type: str):
-        figure, axes = self._initialize_figure_axes()
+        figure, axes = self._initialize_figure_axes(displot_type=False)
 
         if catplot_type in self.catplot_methods.keys():
             logging.info("[*] Passing arguments to plot function...")
