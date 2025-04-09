@@ -13,11 +13,25 @@ from sklearn.inspection import DecisionBoundaryDisplay, PartialDependenceDisplay
 from sklearn.metrics import ConfusionMatrixDisplay, RocCurveDisplay, PrecisionRecallDisplay, PredictionErrorDisplay, DetCurveDisplay
 
 class InheritorClass:
+    """
+    Parent class that will serve as the point where child classes will
+    get the necessary properties to plot
+
+    Parameters:
+        estimator_list (Union[BaseEstimator, List[BaseEstimator]): List of estimators to be plotted in from_estimators
+        estimators_parameters (Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]]): Params for from_estimators
+        predictions_parameters (Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]]): Params for from_predictions
+
+    Notes:
+        It's advised for the user when passing parameters, to pass them inside a dictionary
+        It's much easier to modify the arguments when inside a dictionary compared to passing
+        it to the class directly
+    """
     def __init__ (
         self,
-        estimator_list: Union[BaseEstimator, List[BaseEstimator]],
-        estimators_parameters: Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]],
-        predictions_parameters: Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]]
+        estimator_list: Union[BaseEstimator, List[BaseEstimator]] = None,
+        estimators_parameters: Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]] = None,
+        predictions_parameters: Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]] = None
     ):
         self.estimator_list = estimator_list
         self.estimator_params = estimators_parameters
@@ -30,12 +44,25 @@ class InheritorClass:
 
     def _plot (
         self, 
-        axes: Axes, 
-        estimator_list: Union[BaseEstimator, List[BaseEstimator]], 
-        metric: Callable[Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]], LearningCurveDisplay, ValidationCurveDisplay, ConfusionMatrixDisplay, RocCurveDisplay, PrecisionRecallDisplay, DetCurveDisplay, DecisionBoundaryDisplay, PartialDependenceDisplay], 
-        plot_from_estimators: Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]], 
-        plot_from_predictions: Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]]
+        axes: Axes = None, 
+        estimator_list: Union[BaseEstimator, List[BaseEstimator]] = None, 
+        metric = None, 
+        plot_from_estimators: bool = None, 
+        plot_from_predictions: bool = None
     ):
+        """
+        Method will plot the arguments either from_estimators or from_predictions method
+
+        Parameters:
+            axes (matplotlib.pyplot.Axes): The axes to be used for plotting
+            estimator_list (Union[BaseEstimator, List[BaseEstimator]]): The list of estimators to plot in from_estimators
+            metric: (Callable[Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]], Any of Seaborn's plotting methods]: visualization API plotting method
+            plot_from_estimators (bool): Set to True if will plot using from_estimators
+            plot_from_predictions (bool): Set to True if will plot using from_predictions
+
+        Returns:
+            visualization API plot
+        """
         axes = axes.flatten()
 
         if plot_from_estimators:
@@ -48,11 +75,20 @@ class InheritorClass:
             metric(**self.predictions_params)
 
 class LearningValidationPlot (InheritorClass):
+    """
+    Will visualize model from either the LearningCurve or ValidationCurve display
+
+    Parameters:
+        plot_type: (str): Parameter to choose if LearningCurveDisplay or ValidationCurveDisplay
+        estimator_list (Union[BaseEstimator, List[BaseEstimator]]): List of estimators to plot
+        estimators_parameters (Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]]): Arguments for from_estimator method
+
+    """
     def __init__ (
         self,
-        plot_type: str,
-        estimator_list: Union[BaseEstimator, List[BaseEstimator]],
-        estimators_parameters: Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]]
+        plot_type: str = None,
+        estimator_list: Union[BaseEstimator, List[BaseEstimator]] = None,
+        estimators_parameters: Dict[str, Union[int, float, numpy.ndarray, pandas.DataFrame]] = None
     ):
         super().__init__(estimator_list=estimator_list, estimators_parameters=estimators_parameters)
         self.plot_type = plot_type
@@ -69,6 +105,15 @@ class LearningValidationPlot (InheritorClass):
             raise ValueError("[!] Error: Plot type argument doesn't exist in plot instances or one of the estimators isn't an estimator")
 
 class ModelMetricPlots (InheritorClass):
+    """
+    Visualize the model using Scikit-Learn's Visualization API
+
+    Parameters:
+        plot_type (str): The type of plot from the visualization API to use
+        estimator_plot (bool): Set to True if will plot using from_estimators
+        predictions_plot (bool): Set to True if will plot using from_predictions
+        estimator_list
+    """
     def __init__ (
         self,
         plot_type: str,
