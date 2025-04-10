@@ -12,6 +12,9 @@ from sklearn.model_selection import LearningCurveDisplay, ValidationCurveDisplay
 from sklearn.inspection import DecisionBoundaryDisplay, PartialDependenceDisplay
 from sklearn.metrics import ConfusionMatrixDisplay, RocCurveDisplay, PrecisionRecallDisplay, PredictionErrorDisplay, DetCurveDisplay
 
+logger = logging.getLogger()
+logger.setlevel(logging.INFO)
+
 class InheritorClass:
     """
     A class that serves as a base for plotting estimators and predictions.
