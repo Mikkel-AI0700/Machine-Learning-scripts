@@ -47,7 +47,7 @@ class ScaleColumns (BaseEstimator, TransformerMixin):
         scaler: Callable[Any, Union[numpy.ndarray, pandas.DataFrame]] = None,
         dataset: Union[numpy.ndarray, pandas.DataFrame] = None
     ):
-        log_message = "[*] Scaler: {}\n[*] Dataset: \n{}\n[*] Columns: {}"
+        log_message = "[*] Scaler: {}\n[*] Columns: {}\n[*] Dataset: \n{}\n"
 
         if self.is_numpy:
             logger.info(log_message.format(scaler.__class__.__name__, dataset, self.columns))
