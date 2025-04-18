@@ -5,15 +5,32 @@ from typing import List, Dict, Union
 import os
 import re
 import logging
+import numpy
 import pandas
 import ucimlrepo
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 class LoadDataset:
-    def __init__ (self, uci_id: int, load_method: str, filesystem_path: str, **kwargs):
+    """
+    Dataset loader that will load and create three datasets
+
+    This class will either take in a UCI Machine Learning repository ID or filesystem path
+    to load and create three datasets: main dataframe, copy of main dataset, a numpy representation
+    of the original dataset
+
+    Parameters:
+        uci_id (int): ID of ucimlrepo dataset that will be used to get the dataset
+        load_method (str): Option that will get a function reference that will load the dataset
+        filesystem_path (str): Filesystem path that points to the dataset file
+    """
+    def __init__ (self, uci_id: int = None, load_method: str = None, filesystem_path: str = None, **kwargs):
         self.uci_id = uci_id
         self.loader_method = load_method
         self.fs_path = filesystem_path
         self.extra_params = kwargs
+        self.datasets = {}
         self.loader_methods = {
             "csv": pandas.read_csv,
             "xlsx": pandas.read_excel,
@@ -23,33 +40,89 @@ class LoadDataset:
         }
 
     def _get_loading_method (self):
+        """
+        Get loader reference if loader_method property exists in loader_methods property keys
+
+        Parameters:
+            None
+
+        Returns:
+            Pandas dataframe reader or UCI Machine Learning Repository reader
+        """
         if self.loader_method in self.loader_methods.keys():
             return self.loader_methods.get(self.loader_method)
 
     def _load_pandas (self):
+        """
+        Will get loader reference and if filesystem paths exists, it will assign/create
+        three datasets: main dataframe, copy of main dataframe and a numpy representation of main dataframe
+
+        Parameters:
+            None
+
+        Returns:
+            datasets (dict): Three datasets, two pandas dataframe and one numpy representation
+        """
         loader = self._get_loading_method()
 
         if os.path.exists(self.fs_path):
-            return {
+            self.datasets = {
                 "main_df": loader(self.fs_path, **self.extra_params),
                 "copy_df": loader(self.fs_path, **self.extra_params).copy(),
                 "numpy_df": loader(self.fs_path, **self.extra_params).to_numpy()
             }
+            return self.datasets
 
     def _load_uci (self):
+        """
+        Will load a temporary raw dataset from UCI Machine Learning Repository, then it will
+        assign/create three datasets
+
+        Parameters:
+            None
+
+        Returns:
+            datasets (dict): Three datasets, two pandas dataframe and one numpy representation
+        """
         loader = self._get_loading_method()
         temporary_dataset = loader(id=self.uci_id)
 
-        return {
+        self.datasets = {
             "main_df": pandas.DataFrame(temporary_dataset.data.original, **self.extra_params),
             "copy_df": pandas.DataFrame(temporary_dataset.data.original, **self.extra_params).copy(),
             "numpy_df": pandas.DataFrame(temporary_dataset.data.original, **self.extra_params).to_numpy()
         }
+        return self.datasets
 
-    def load (self, load_uci: bool, load_pandas: bool):
-        if load_uci:
+    def load (self, use_uci: bool = False, use_pandas: bool = False):
+        """
+        Method that allows the user to choose wether to load datasets via Pandas or ucimlrepo
+
+        Parameters:
+            use_uci (bool): Set to True if datasets need to be loaded using ucimlrepo
+            use_pandas (bool): Set to True if datasets need to be loaded using Pandas
+
+        Returns:
+            datasets (dict): Three datasets, two pandas dataframe and one numpy representation
+        """
+        if use_uci:
+            logging.info("[*] Creating three datasets using pandas")
             dataset_dictionary = self._load_uci()
-        if load_pandas:
+        if use_pandas:
+            logging.info("[*] Creating three datasets using ucimlrepo")
             dataset_dictionary = self._load_pandas()
+
         return dataset_dictionary
 
+    def reset_datasets (self, dataset_dict: Dict[str, Union[numpy.ndarray, pandas.DataFrame]] = None):
+        """
+        Method will reset the datasets dictionary should the datasets dictionary gets messed up
+
+        Parameters:
+            dataset_dict (dict): Dictionary that contains the three original datasets
+
+        Returns:
+            dataset_dict (dict): Resetted dictionary
+        """
+        dataset_dict = self.datasets
+        return dataset_dict
