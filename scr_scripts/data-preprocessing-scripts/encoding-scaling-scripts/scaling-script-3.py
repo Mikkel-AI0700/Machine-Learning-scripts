@@ -47,7 +47,7 @@ class ScaleColumns (BaseEstimator, TransformerMixin):
         scaler: Callable[Any, Union[numpy.ndarray, pandas.DataFrame]] = None,
         dataset: Union[numpy.ndarray, pandas.DataFrame] = None
     ):
-        log_message = "[*] Scaler: {}\n[*] Dataset: {}\n[*] Columns: {}"
+        log_message = "[*] Scaler: {}\n[*] Dataset: \n{}\n[*] Columns: {}"
 
         if self.is_numpy:
             logger.info(log_message.format(scaler.__class__.__name__, dataset, self.columns))
@@ -59,9 +59,8 @@ class ScaleColumns (BaseEstimator, TransformerMixin):
                 return pandas.DataFrame(scaler.fit_transform(dataset), dataset.columns)
             else:
                 logger.info(log_message.format(scaler.__class__.__name__, dataset, self.columns))
-                return pandas.DataFrame(
+                dataset[self.columns] = pandas.DataFrame(
                     scaler.fit_transform(dataset[self.columns]),
-                    dataset[self.columns].columns
                 )
 
     def fit_transform (self, X, y=None):
@@ -73,11 +72,7 @@ class ScaleColumns (BaseEstimator, TransformerMixin):
         }
 
         if self.scale_type in scaler_instances.keys() and self._correct_datatypes(X):
-            if self.is_numpy:
-                X = self._transform_dataset(scaler_instances.get(self.scale_type), X)
-                return X
-            if self.is_pandas:
-                X[self.columns] = self._transform_dataset(scaler_instances.get(self.scale_type), X)
-                return X
+            self._transform_dataset(scaler_instances.get(self.scale_type), X)
+            return X
         else:
             logger.error("Scaling type not in scaling instances or dataset or dataset samples dtype is wrong")
