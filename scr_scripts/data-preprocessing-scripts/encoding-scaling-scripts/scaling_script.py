@@ -1,6 +1,6 @@
-
 # WARNING: DO NOT COPY PASTE THE IMPORTS ABOVE CLASS. USE DEPENDENCY IMPORTER
 from typing import *
+import re
 import logging
 import numpy
 import pandas
@@ -12,73 +12,65 @@ logger.setLevel(logging.INFO)
 
 class ScaleColumns (BaseEstimator, TransformerMixin):
     def __init__ (
-        self, 
-        columns_to_preprocess: Union[str, List[str]] = None, 
-        scaler_parameters: Dict[str, Union[str, float, numpy.ndarray, pandas.DataFrame]] = None, 
-        scaling_preprocessing_type: str = None, 
-        numpy_output: bool = None, 
-        pandas_output: bool = None
+        self,
+        columns: Union[str, List[str]] = None,
+        scaling_type: str = None,
+        scaler_parameters: Dict[str, Any] = None
     ):
-        self.columns = columns_to_preprocess
-        self.scaler_type = scaling_preprocessing_type
-        self.scaler_parameters = scaler_parameters
-        self.numpy_output = numpy_output
-        self.pandas_output = pandas_output
+        self.columns = columns
+        self.scale_type = scaling_type
+        self.scaler_params = scaler_parameters
+        self.is_numpy = False
+        self.is_pandas = False
 
-    def _is_correct_datatype (
-        self, 
-        dataset: Union[numpy.ndarray, pandas.DataFrame] = None
-    ):
-        numpy_datatypes = (numpy.int8, numpy.int16, numpy.int32, numpy.int64, numpy.float16, numpy.float32, numpy.float64)
-        dataset_datatypes = (numpy.ndarray, pandas.Series, pandas.DataFrame)
-
-        # ----- Two if statements that will check if either numpy or pandas dataframe/series dataset has correct datatypes -----
-        if isinstance(dataset, dataset_datatypes[0]) and dataset.dtype in numpy_datatypes:
-            logging.info("[*] Numpy dataset and samples type is correct")
-            return True
-        if isinstance(dataset, (dataset_datatypes[1], dataset_datatypes[2])) and dataset[self.columns].dtypes.isin(numpy_datatypes).all():
-            logging.info("[*] Pandas dataset and samples type is correct")
-            return True
+    def _correct_datatypes (self, dataset: Union[numpy.ndarray, pandas.DataFrame] = None):
+        try:
+            if (isinstance(dataset, numpy.ndarray) and
+                all(numpy.issubdtype(dataset, np_type) for np_type in [numpy.integer, numpy.floating])
+            ):
+                logger.info("Numpy dataset and dataset samples have correct datatypes")
+                self.is_numpy = True
+                return True
+            elif (isinstance(dataset, pandas.DataFrame) and
+                all(pandas.api.types.is_numeric_dtype(dataset[col]) for col in self.columns)
+            ):
+                logger.info("Pandas dataset and dataset samples have correct datatypes")
+                self.is_pandas = True
+                return True
+            else:
+                raise ValueError("Either dataset isn't Numpy or Pandas or dataset samples dtypes is incorrect")
+        except ValueError as incorrect_datatype_error:
+            logger.error(incorrect_datatype_error)
 
     def _transform_dataset (
-        self, 
-        retain_numpy: bool = None, 
-        retain_pandas: bool = None, 
-        scaler: TransformerMixin = None, 
+        self,
+        scaler: Callable[Any, Union[numpy.ndarray, pandas.DataFrame]] = None,
         dataset: Union[numpy.ndarray, pandas.DataFrame] = None
     ):
-        if retain_numpy:
-            logging.info("[*] Scaling numpy dataset now")
+        log_message = "[*] Scaler: {}\n[*] Columns: {}\n[*] Dataset: \n{}\n"
+
+        if self.is_numpy:
+            logger.info(log_message.format(scaler.__class__.__name__, dataset, self.columns))
             return scaler.fit_transform(dataset)
 
-        if retain_pandas:
-            log_message = "[*] Scaler: {}\n[*] Dataset: {}\n[*] Columns: {}"
-
+        if self.is_pandas:
             if scaler.__class__.__name__ == "Normalizer":
-                logging.info(log_message.format("Normalizer", dataset, self.columns))
-                dataset = pandas.DataFrame(
-                    scaler.fit_transform(dataset.values), dataset.index, dataset.columns
-                )
+                logger.info(log_message.format("Normalizer", dataset, self.columns))
+                dataset[self.columns] = pandas.DataFrame(scaler.fit_transform(dataset))
             else:
-                logging.info(log_message.format(scaler.__class__.__name__, dataset, self.columns))
-                dataset[self.columns] = pandas.DataFrame(
-                    scaler.fit_transform(dataset[self.columns]), dataset[self.columns].columns
-                )
-            return dataset
+                logger.info(log_message.format(scaler.__class__.__name__, dataset, self.columns))
+                dataset[self.columns] = pandas.DataFrame(scaler.fit_transform(dataset[self.columns]))
 
     def fit_transform (self, X, y=None):
         scaler_instances = {
-            "standard" : StandardScaler(**(self.scaler_parameters or {})),
-            "minmax" : MinMaxScaler(**(self.scaler_parameters or {})),
-            "maxabs" : MaxAbsScaler(**(self.scaler_parameters or {})),
-            "normalizer" : Normalizer(**(self.scaler_parameters or {}))
+            "standard": StandardScaler(**(self.scaler_params or {})),
+            "minmax": MinMaxScaler(**(self.scaler_params or {})),
+            "maxabs": MaxAbsScaler(**(self.scaler_params or {})),
+            "Normalizer": Normalizer(**(self.scaler_params or {}))
         }
 
-        if self.scaler_type in scaler_instances and self._is_correct_datatype(X):
-            logging.info("[*] Passing dataset and other parameters to scaler function...")
-            transformed_dataset = self._transform_dataset(
-                self.numpy_output, self.pandas_output, scaler_instances.get(self.scaler_type), X
-            )
-            return transformed_dataset
+        if self.scale_type in scaler_instances.keys() and self._correct_datatypes(X):
+            self._transform_dataset(scaler_instances.get(self.scale_type), X)
+            return X
         else:
-            raise ValueError("[-] Error: Either scaling_preprocessing_type argument doesn't match or dataset type is incorrect")
+            logger.error("Scaling type not in scaling instances or dataset or dataset samples dtype is wrong")
