@@ -56,12 +56,10 @@ class ScaleColumns (BaseEstimator, TransformerMixin):
         if self.is_pandas:
             if scaler.__class__.__name__ == "Normalizer":
                 logger.info(log_message.format("Normalizer", dataset, self.columns))
-                return pandas.DataFrame(scaler.fit_transform(dataset), dataset.columns)
+                dataset[self.columns] = pandas.DataFrame(scaler.fit_transform(dataset))
             else:
                 logger.info(log_message.format(scaler.__class__.__name__, dataset, self.columns))
-                dataset[self.columns] = pandas.DataFrame(
-                    scaler.fit_transform(dataset[self.columns]),
-                )
+                dataset[self.columns] = pandas.DataFrame(scaler.fit_transform(dataset[self.columns]))
 
     def fit_transform (self, X, y=None):
         scaler_instances = {
