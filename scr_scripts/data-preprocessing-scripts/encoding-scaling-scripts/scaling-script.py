@@ -24,6 +24,25 @@ class ScaleColumns (BaseEstimator, TransformerMixin):
         self.is_pandas = False
 
     def _correct_datatypes (self, dataset: Union[numpy.ndarray, pandas.DataFrame] = None):
+        """
+        Validates the datatype of the dataset and checks whether it is compatible
+        for scaling operations.
+
+        If the dataset is a NumPy array, checks that all elements are either
+        integers or floats. If it's a Pandas DataFrame, checks that the specified
+        columns contain only numeric datatypes.
+
+        Args:
+            dataset (Union[numpy.ndarray, pandas.DataFrame], optional):
+                The input dataset to validate. Can be a NumPy array or a Pandas DataFrame.
+
+        Returns:
+            bool: True if the dataset has correct datatypes and is compatible with scaling.
+
+        Raises:
+            ValueError: If the dataset is not a valid NumPy or Pandas object,
+                or if the datatypes within are not numeric.
+        """
         try:
             if (isinstance(dataset, numpy.ndarray) and
                 all(numpy.issubdtype(dataset, np_type) for np_type in [numpy.integer, numpy.floating])
@@ -47,6 +66,24 @@ class ScaleColumns (BaseEstimator, TransformerMixin):
         scaler: Callable[Any, Union[numpy.ndarray, pandas.DataFrame]] = None,
         dataset: Union[numpy.ndarray, pandas.DataFrame] = None
     ):
+        """
+        Applies the given scaler to the dataset based on the detected format (NumPy or Pandas).
+
+        For NumPy arrays, the entire dataset is scaled. For Pandas DataFrames, only the specified
+        columns are scaled. Special handling is applied if the scaler is a Normalizer, which expects
+        the entire dataset rather than specific columns.
+
+        Args:
+            scaler (Callable):
+                A Scikit-Learn compatible scaler instance (e.g., StandardScaler, MinMaxScaler).
+            dataset (Union[numpy.ndarray, pandas.DataFrame]):
+                The input dataset to be scaled.
+
+        Returns:
+            numpy.ndarray or None:
+                The scaled dataset if the input was a NumPy array. Returns None for Pandas DataFrames
+                as they are modified in-place.
+        """
         log_message = "[*] Scaler: {}\n[*] Columns: {}\n[*] Dataset: \n{}\n"
 
         if self.is_numpy:
@@ -62,6 +99,26 @@ class ScaleColumns (BaseEstimator, TransformerMixin):
                 dataset[self.columns] = pandas.DataFrame(scaler.fit_transform(dataset[self.columns]))
 
     def fit_transform (self, X, y=None):
+        """
+        Fits the selected scaler to the input data and transforms it.
+
+        Based on the `scaling_type` provided during initialization, this method
+        initializes the corresponding Scikit-Learn scaler, validates the input data,
+        and applies the transformation. It supports both NumPy arrays and Pandas DataFrames.
+
+        Args:
+            X (Union[numpy.ndarray, pandas.DataFrame]):
+                The dataset to be scaled. Must be numeric and either a NumPy array or Pandas DataFrame.
+            y (ignored, optional):
+                This parameter is included for compatibility with Scikit-Learn's transformer API.
+
+        Returns:
+            Union[numpy.ndarray, pandas.DataFrame]:
+                The scaled dataset, either as a transformed NumPy array or an updated Pandas DataFrame.
+
+        Logs:
+            Error if the scaling type is invalid or the dataset contains incompatible datatypes.
+        """
         scaler_instances = {
             "standard": StandardScaler(**(self.scaler_params or {})),
             "minmax": MinMaxScaler(**(self.scaler_params or {})),
@@ -74,3 +131,4 @@ class ScaleColumns (BaseEstimator, TransformerMixin):
             return X
         else:
             logger.error("Scaling type not in scaling instances or dataset or dataset samples dtype is wrong")
+
