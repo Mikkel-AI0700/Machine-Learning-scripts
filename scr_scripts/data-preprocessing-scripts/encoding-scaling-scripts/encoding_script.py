@@ -1,89 +1,69 @@
-
 # WARNING: DO NOT COPY PASTE THE IMPORTS ABOVE CLASS. USE DEPENDENCY IMPORTER
 from typing import Dict, List, Union
 import logging
 import numpy
 import pandas
+from sklearn.model_selection import train_test_split
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, TargetEncoder, LabelEncoder, LabelBinarizer
 
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger.setlevel(logging.INFO)
 
-class EncodeColumns (BaseEstimator, TransformerMixin):
-    def __init__ (
-        self, 
-        columns_to_preprocess: Union[str, List[str]], 
-        encoder_instance_parameters: Dict[str, Union[str, float, numpy.ndarray, pandas.DataFrame]], 
-        encoding_preprocessing_type: str, 
-        numpy_output: bool, 
-        pandas_output: bool
-    ):
-        self.columns = columns_to_preprocess
-        self.encoding_type = encoding_preprocessing_type
-        self.encoder_parameters = encoder_instance_parameters
-        self.numpy_output = numpy_output
-        self.pandas_output = pandas_output
-
+class EncodeColumns:
     def _is_correct_datatype (
         self, 
-        check_dataset: bool, 
-        check_column: bool, 
-        dataset: Union[numpy.ndarray, pandas.DataFrame]
+        columns: Union[str, List[str]] = None,
+        dataset: Union[numpy.ndarray, pandas.DataFrame] = None
     ):
-        dataset_datatypes = (numpy.ndarray, pandas.Series, pandas.DataFrame)
-        column_datatypes = (numpy.object_, numpy.str_, numpy.int8, "category", "string")
-
-        if check_dataset and isinstance(dataset, dataset_datatypes):
-            return True
-        else:
-            raise ValueError("[-] Error: Dataset argument is not numpy or pandas")
-
-        if check_column:
-            if isinstance(dataset, dataset_datatypes[0]) and dataset.dtype in column_datatypes:
-                return True
-            elif isinstance(dataset, (dataset_datatypes[1], dataset_datatypes[2])) and dataset[self.columns].dtypes.isin(column_datatypes).all():
+        try:
+            if (all(pandas.api.types.is_string_dtype(dataset[col]) for col in columns) or 
+                all(pandas.api.types.is_object_dtype(dataset[col]) for col in columns)
+            ):
+                logger.info("[*] Pandas dataset and samples dtype is correct")
                 return True
             else:
-                raise ValueError("[-] Error: Either numpy or pandas dataset's dtype is not correct")
+                raise TypeError("Pandas dataset or dataset samples dtypes are incorrect")
+        except TypeError as incorrect_datatype_error:
+            logging.error(incorrect_datatype_error)
 
     def _transform_dataset (
-        self, 
-        retain_numpy: bool, 
-        retain_pandas: bool, 
-        encoder: TransformerMixin, 
-        dataset: Union[numpy.ndarray, pandas.DataFrame]
+        self,
+        encoder: Callable,
+        columns: Union[str, List[str]],
+        dataset: Union[numpy.ndarray, pandas.DataFrame],
     ):
-        if retain_numpy and self._is_correct_datatype(check_column=True, dataset=dataset) and dataset.ndim > 1:
-            logging.info("[*] {} detected. Doing {} now.".format(encoder.__class__.__name__))
-            dataset = encoder.fit_transform(dataset)
-            return dataset
+        log_message = "[*] Scaler: {}\n[*] Columns: {}\n[*] Dataset: \n{}\n\n"
+        logger.info(log_message.format(encoder.__class__.__name__, columns, dataset))
 
-        if retain_pandas and self._is_correct_datatype(check_column=True, dataset=dataset):
-            if encoder.__class__.__name__ == "OneHotEncoder":
-                logging.info("[*] OneHotEncoder detected. Doing OneHotEncoding now")
-                temp_ohe_dataset = pandas.DataFrame(
-                    encoder.fit_transform(dataset[self.columns]), dataset[self.columns].index, dataset[self.columns].columns
-                )
-                dataset = pandas.concat([dataset.drop(self.columns, axis=1), temp_ohe_dataset], axis=1)
-                return dataset
-            else:
-                logging.info("[*] {} detected. Doing {} now".format(encoder.__class__.__name__))
-                dataset[self.columns] = encoder.fit_transform(dataset[self.columns])
-                return dataset
+        if encoder.__class__.__name__ == "OneHotEncoder":
+            dataset = pandas.concat(
+                [dataset.drop(columns, axis=1), pandas.DataFrame(encoder.fit_transform(dataset[columns]))],
+                axis=1
+            )
+        elif encoder.__class__.__name__ == "TargetEncoder":
+            temp_x, temp_y = dataset.iloc[:, :-1], dataset.iloc[:, -1]
+            dataset = encoder.fit_tranform(temp_x, temp_y)
+        else:
+            dataset[columns] = encoder.fit_transform(dataset[columns])
 
-    def fit_transform(self, X, y=None):
+    def fit_transform (
+        self,
+        encoder_type: str = None,
+        columns: Union[str, List[str]] = None,
+        encoder_parameters: Dict[str, Any] = None,
+        dataset: Union[numpy.ndarray, pandas.DataFrame] = None
+    ):
         encoder_instances = {
-            "ohe": OneHotEncoder(**self.encoder_parameters or {}),
-            "ordinal": OrdinalEncoder(**self.encoder_parameters or {}),
-            "target": TargetEncoder(**self.encoder_parameters or {}),
-            "label": LabelEncoder(**self.encoder_parameters or {}),
-            "binarizer": LabelBinarizer(**self.encoder_parameters or {})
+            "OneHotEncoder": OneHotEncoder(**(encoder_parameters or {})),
+            "OrdinalEncoder": OrdinalEncoder(**(encoder_parameters or {})),
+            "TargetEncoder": TargetEncoder(**(encoder_parameters or {})),
+            "LabelBinarizer": LabelBinarizer(**(encoder_parameters or {})),
+            "LabelEncoder": LabelEncoder(**(encoder_parameters or {}))
         }
 
-        if self.encoding_type in encoder_instances.keys() and self._is_correct_datatype(check_dataset=True, dataset=X):
-            logging.info("[*] Passing dataset and other parameters now to encoder function...")
-            encoded_dataset = self._transform_dataset(self.numpy_output, self.pandas_output, encoder_instances.get(self.encoding_type), X)
-            return encoded_dataset
+        if encoder_type in encoder_instances.keys() and self._is_correct_datatypes(columns, dataset)
+            self._transform_dataset(encoder_instances.get(encoder_type), columns, dataset)
         else:
-            raise ValueError("[-] Error: Either encoding argument doesn't exist in the encoder instances or dataset argument contains wrong datatypes")
+            raise AttributeError("Encoder type argument not in encoder_instances")
+
