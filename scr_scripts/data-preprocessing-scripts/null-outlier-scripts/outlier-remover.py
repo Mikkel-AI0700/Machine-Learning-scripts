@@ -52,5 +52,13 @@ class NullRemover:
         columns: Union[str, List[str]],
         dataet: pandas.DataFrame
     ):
-        pass
+        remover_instances + {
+            "zscore": _zscore_method,
+            "iqr": _iqr_method
+        }
+
+        if self._check_types(remover_method, remover_instances, columns, dataset):
+            remover_reference = remover_instances.get(remover_method)
+            dataset = remover_reference(columns, dataset)
+            return dataset
 
