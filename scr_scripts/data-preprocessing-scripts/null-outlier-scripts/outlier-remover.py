@@ -10,8 +10,8 @@ class NullRemover:
     def _check_types (
         self,
         remover_method: str,
-        remover_instances: Dict[str, Any],
-        columns: Union[str, List[str]],
+        remover_instances: dict[str, Any],
+        columns: Union[str, list[str]],
         dataset: pandas.DataFrame
     ):
         TYPE_ERROR_LOG = "Pandas dataset or dataset samples dtype is incorrect"
@@ -34,17 +34,26 @@ class NullRemover:
 
     def _zscore_method (
         self,
+        threshold: tuple[int, int] = (3, -3)
         columns: Union[str, List[str]],
         dataset: pandas.DataFrame
     ):
-        pass
+        dset_copy = dataset.copy()
+
+        dset_zscored = dset_copy[columns] - dset_copy[columns].mean() / dset_copy.std(ddof=0)
+        indices_zscored = dset_copy[columns][(dset_copy[columns] > threshold[0]) | (dset_copy[columns] < threshold[1])]
+        dataset[columns] = dataset[columns].drop(index=indices_zscored)
+
+        return dataset
 
     def _iqr_method (
         self,
         columns: Union[str, List[str]],
         dataset: pandas.DataFrame
     ):
-        pass
+        percentile25, percentile75 = 25 / 100 * (len() + 1), 75 / 100 * (len() + 1)
+        iqr = percentile75, percentile25
+        iqr_min, iqr_max = None, None
 
     def transform (
         self,
@@ -52,6 +61,7 @@ class NullRemover:
         columns: Union[str, List[str]],
         dataet: pandas.DataFrame
     ):
+        columns = [columns] if isinstance(columns, str) else columns
         remover_instances + {
             "zscore": _zscore_method,
             "iqr": _iqr_method
