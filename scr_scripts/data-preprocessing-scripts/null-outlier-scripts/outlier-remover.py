@@ -1,6 +1,6 @@
 # WARNING: DO NOT COPY PASTE THE IMPORTS ABOVE THE CLASS. USE DEPENDENCY IMPORTER
 
-import pandas
+import numpy
 import logging
 
 logger = getLogger()
@@ -10,17 +10,17 @@ class NullRemover:
     def _check_types (
         self,
         remover_method: str,
-        remover_instances: dict[str, Any],
-        columns: Union[str, list[str]],
-        dataset: pandas.DataFrame
+        remover_instances: dict[str, Callable],
+        columns: Union[int, list[int, int]],
+        dataset: numpy.ndarray
     ):
-        TYPE_ERROR_LOG = "Pandas dataset or dataset samples dtype is incorrect"
-        ATTRIBUTE_ERROR_LOG = "Remover argument doesn't exist in the remover instances"
+        TYPE_ERROR_LOG = ""
+        ATTRIBUTE_ERROR_LOG = ""
 
         try:
-            if (not isinstance(dataset, pandas.DataFrame) or
-                not all(pandas.api.types.is_integer_dtype(dataset[col]) for col in columns) or
-                not all(pandas.api.types.is_float_dtype(dataset[col]) for col in columns)
+            if (not isinstance(dataset, numpy.ndarray) or
+                not all(numpy.issubdtype(dataset[:, col].dtype, numpy.integer) for col in columns) or
+                not all(numpy.issubdtype(dataset[:, col].dtype, numpy.floating) for col in columns)
             ):
                 raise TypeError(TYPE_ERROR_LOG)
             elif remover_method not in remover_instances.keys():
@@ -35,40 +35,45 @@ class NullRemover:
     def _zscore_method (
         self,
         threshold: tuple[int, int] = (3, -3)
-        columns: Union[str, List[str]],
-        dataset: pandas.DataFrame
+        columns: Union[int, list[int, int]],
+        dataset: numpy.ndarray
     ):
-        dset_copy = dataset.copy()
+        arr_cpy = dataset.copy()
 
-        dset_zscored = dset_copy[columns] - dset_copy[columns].mean() / dset_copy.std(ddof=0)
-        indices_zscored = dset_copy[columns][(dset_copy[columns] > threshold[0]) | (dset_copy[columns] < threshold[1])]
-        dataset[columns] = dataset[columns].drop(index=indices_zscored)
+        zscored_cpy = arr_cpy[:, columns] - arr_cpy[:, columns].mean() / arr_cpy[:, columns].std(ddof=0)
+        dataset[:, columns] = numpy.delete(
+            dataset[:, columns], 
+            dataset[:, columns][(dataset[:, columns] > threshold[0]) | (dataset[:, columns] < threshold[1])],
+            axis=1
+        )
 
         return dataset
 
     def _iqr_method (
         self,
-        columns: Union[str, List[str]],
-        dataset: pandas.DataFrame
+        columns: Union[int, list[int, int]],
+        dataset: numpy.ndarray
     ):
-        percentile25, percentile75 = 25 / 100 * (len() + 1), 75 / 100 * (len() + 1)
-        iqr = percentile75, percentile25
-        iqr_min, iqr_max = None, None
+        dset_cols = dataset[:, columns]
+
+        lower_bound = (
+            numpy.percentile(dset_cols, 25) - 1.5 * (numpy.percentile(dset_cols, 75) - numpy.percentile(dset_cols, 25))
+        )
+        upper_bound = (
+            numpy.percentile(dset_cols, 75) + 1.5 * (numpy.percentile(dset_cols, 75) - numpy.percentile(dset_cols, 25))
+        )
 
     def transform (
         self,
-        remover_method: str,
-        columns: Union[str, List[str]],
-        dataet: pandas.DataFrame
+        threshold: tuple[int, int] = None,
+        remover_method: str = None,
+        columns: Union[int, list[int, int]] = None,
+        dataset: numpy.ndarray
     ):
-        columns = [columns] if isinstance(columns, str) else columns
-        remover_instances + {
-            "zscore": _zscore_method,
-            "iqr": _iqr_method
-        }
-
         if self._check_types(remover_method, remover_instances, columns, dataset):
-            remover_reference = remover_instances.get(remover_method)
-            dataset = remover_reference(columns, dataset)
-            return dataset
+            if remover_method is "zscore":
+                dataset = self._zscore_method(threshold, columns, dataset)
+            else:
+                dataset = self._iqr_method(columns, dataset)
+        return dataset
 
