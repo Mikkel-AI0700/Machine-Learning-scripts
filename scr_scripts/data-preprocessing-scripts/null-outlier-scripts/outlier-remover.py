@@ -14,13 +14,13 @@ class NullRemover:
         columns: Union[int, list[int, int]],
         dataset: numpy.ndarray
     ):
-        TYPE_ERROR_LOG = ""
-        ATTRIBUTE_ERROR_LOG = ""
+        TYPE_ERROR_LOG = "[!] Error: Dataset isn't Numpy or dataset samples are incorrect"
+        ATTRIBUTE_ERROR_LOG = "[!] Error: Remover method doesn't exist"
 
         try:
             if (not isinstance(dataset, numpy.ndarray) or
-                not all(numpy.issubdtype(dataset[:, col].dtype, numpy.integer) for col in columns) or
-                not all(numpy.issubdtype(dataset[:, col].dtype, numpy.floating) for col in columns)
+                not numpy.issubdtype(dataset[:, columns], numpy.integer) or
+                not numpy.issubdtype(dataset[:, columns], numpy.floating)
             ):
                 raise TypeError(TYPE_ERROR_LOG)
             elif remover_method not in remover_instances.keys():
@@ -43,7 +43,7 @@ class NullRemover:
         zscored_cpy = arr_cpy[:, columns] - arr_cpy[:, columns].mean() / arr_cpy[:, columns].std(ddof=0)
         dataset[:, columns] = numpy.delete(
             dataset[:, columns], 
-            dataset[:, columns][(dataset[:, columns] > threshold[0]) | (dataset[:, columns] < threshold[1])],
+            numpy.where((dataset[:, columns] > threshold[0]) | (dataset[:, columns] < threshold[1]))
             axis=1
         )
 
@@ -55,13 +55,20 @@ class NullRemover:
         dataset: numpy.ndarray
     ):
         dset_cols = dataset[:, columns]
-
-        lower_bound = (
+        lower_bound_iqr = (
             numpy.percentile(dset_cols, 25) - 1.5 * (numpy.percentile(dset_cols, 75) - numpy.percentile(dset_cols, 25))
         )
-        upper_bound = (
+        upper_bound_iqr = (
             numpy.percentile(dset_cols, 75) + 1.5 * (numpy.percentile(dset_cols, 75) - numpy.percentile(dset_cols, 25))
         )
+
+        dataset[:, columns] = numpy.delete(
+            dataset[:, columns],
+            numpy.where((dataset[:, columns] > upper_bound_iqr) | (dataset[:, columns] < lower_bound_iqr))
+            axis=1
+        )
+
+        return dataset
 
     def transform (
         self,
