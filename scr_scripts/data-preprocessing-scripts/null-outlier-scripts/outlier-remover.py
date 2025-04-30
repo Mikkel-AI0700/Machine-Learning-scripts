@@ -1,21 +1,23 @@
 # WARNING: DO NOT COPY PASTE THE IMPORTS ABOVE THE CLASS. USE DEPENDENCY IMPORTER
 
-import numpy
 import logging
+import numpy
+from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactory
 
 logger = getLogger()
 logger.setLevel(logging.INFO)
 
 class NullRemover:
     def _check_types (
-        self,
-        remover_method: str,
-        remover_instances: dict[str, Callable],
-        columns: Union[int, list[int, int]],
+        self, 
+        remover_method: str, 
+        columns: Union[int, list[int, int]], 
         dataset: numpy.ndarray
     ):
         TYPE_ERROR_LOG = "[!] Error: Dataset isn't Numpy or dataset samples are incorrect"
         ATTRIBUTE_ERROR_LOG = "[!] Error: Remover method doesn't exist"
+        REMOVER_INSTANCES = {"zscore", "iqr", "lof", "iso"}
 
         try:
             if (not isinstance(dataset, numpy.ndarray) or
@@ -23,7 +25,7 @@ class NullRemover:
                 not numpy.issubdtype(dataset[:, columns], numpy.floating)
             ):
                 raise TypeError(TYPE_ERROR_LOG)
-            elif remover_method not in remover_instances.keys():
+            elif remover_method not in REMOVER_INSTANCES:
                 raise AttributeError(ATTRIBUTE_ERROR_LOG)
             else:
                 return True
@@ -33,14 +35,14 @@ class NullRemover:
             logger.error(non_existent_remover_error)
 
     def _zscore_method (
-        self,
-        threshold: tuple[int, int] = (3, -3)
-        columns: Union[int, list[int, int]],
+        self, 
+        threshold: tuple[int, int] = (3, -3),
+        columns: Union[int, list[int, int]], 
         dataset: numpy.ndarray
     ):
-        arr_cpy = dataset.copy()
+        dset_cpy = dataset.copy()
 
-        zscored_cpy = arr_cpy[:, columns] - arr_cpy[:, columns].mean() / arr_cpy[:, columns].std(ddof=0)
+        zscored_cpy = dset_cpy[:, columns] - dset_cpy[:, columns].mean() / dset_cpy[:, columns].std(ddof=0)
         dataset[:, columns] = numpy.delete(
             dataset[:, columns], 
             numpy.where((dataset[:, columns] > threshold[0]) | (dataset[:, columns] < threshold[1]))
@@ -50,16 +52,17 @@ class NullRemover:
         return dataset
 
     def _iqr_method (
-        self,
-        columns: Union[int, list[int, int]],
+        self, 
+        columns: Union[int, list[int, int]], 
         dataset: numpy.ndarray
     ):
-        dset_cols = dataset[:, columns]
+        dset_cpy = dataset[:, columns]
+
         lower_bound_iqr = (
-            numpy.percentile(dset_cols, 25) - 1.5 * (numpy.percentile(dset_cols, 75) - numpy.percentile(dset_cols, 25))
+            numpy.percentile(dset_cpy, 25) - 1.5 * (numpy.percentile(dset_cpy, 75) - numpy.percentile(dset_cpy, 25))
         )
         upper_bound_iqr = (
-            numpy.percentile(dset_cols, 75) + 1.5 * (numpy.percentile(dset_cols, 75) - numpy.percentile(dset_cols, 25))
+            numpy.percentile(dset_cpy, 75) + 1.5 * (numpy.percentile(dset_cpy, 75) - numpy.percentile(dset_cpy, 25))
         )
 
         dataset[:, columns] = numpy.delete(
@@ -70,6 +73,22 @@ class NullRemover:
 
         return dataset
 
+    def _lof_method (
+        self, 
+        lof_parameters: dict[str, Any], 
+        dataset: numpy.ndarray
+    ):
+        lof_instance = LocalOutlierFactor(**(lof_parameters or None))
+        return lof_instance.fit_predict(dataset)
+
+    def _isolation_method (
+        self, 
+        iso_parameters: dict[str, Any], 
+        dataset: numpy.ndarray
+    ):
+        iso_instance = IsolationForest(**(iso_parameters or None))
+        return iso_instance.fit_predict(dataset)
+
     def transform (
         self,
         threshold: tuple[int, int] = None,
@@ -77,10 +96,14 @@ class NullRemover:
         columns: Union[int, list[int, int]] = None,
         dataset: numpy.ndarray
     ):
-        if self._check_types(remover_method, remover_instances, columns, dataset):
+        if self._check_types(remover_method, columns, dataset):
             if remover_method is "zscore":
                 dataset = self._zscore_method(threshold, columns, dataset)
-            else:
+            elif remover_method is "iqr":
                 dataset = self._iqr_method(columns, dataset)
+            elif remover_method is "lof":
+                dataset = self._lof_method(columns, dataset)
+            else:
+                dataset = self._iso_method(columns, dataset)
         return dataset
 
