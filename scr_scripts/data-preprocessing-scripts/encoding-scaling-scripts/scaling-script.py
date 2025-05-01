@@ -50,7 +50,8 @@ class ScaleColumns:
         columns: Union[int, list[int]],
         dataset: numpy.ndarray
     ):
-        pass
+        logger.info(self.SCALING_LOG_INFO.format(scaler, columns, dataset))
+        return scaler.fit_transform(dataset[:, columns])
 
     def transform (
         self,
