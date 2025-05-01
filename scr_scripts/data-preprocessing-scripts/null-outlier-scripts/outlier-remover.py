@@ -9,16 +9,25 @@ logger = getLogger()
 logger.setLevel(logging.INFO)
 
 class NullRemover:
+    def __init__ (
+        self,
+        threshold: tuple[int, int] = None,
+        lof_parameters: dict[str, Any] = None,
+        iso_parameters: dict[str, Any] = None
+    ):
+        self.threshold = threshold
+        self.lof_params = lof_parameters
+        self.iso_params = iso_parameters
+        self.REMOVER_INSTANCES = {"zscore", "iqr", "lof", "iso"}
+        self.TYPE_ERROR_LOG = "[!] Error: Dataset isn't Numpy or dataset samples are incorrect"
+        self.ATTRIBUTE_ERROR_LOG = "[!] Error: Remover method doesn't exist"
+
     def _check_types (
         self, 
         remover_method: str, 
         columns: Union[int, list[int, int]], 
         dataset: numpy.ndarray
     ):
-        TYPE_ERROR_LOG = "[!] Error: Dataset isn't Numpy or dataset samples are incorrect"
-        ATTRIBUTE_ERROR_LOG = "[!] Error: Remover method doesn't exist"
-        REMOVER_INSTANCES = {"zscore", "iqr", "lof", "iso"}
-
         try:
             if (not isinstance(dataset, numpy.ndarray) or
                 not numpy.issubdtype(dataset[:, columns], numpy.integer) or
@@ -32,7 +41,7 @@ class NullRemover:
         except TypeError as incorrect_datatype_error:
             logger.error(incorrect_datatype_error)
         except AttributeError as non_existent_remover_error:
-            logger.error(non_existent_remover_error)
+            logger.error(non_existent_remover_error)iso_parameters
 
     def _zscore_method (
         self, 
@@ -41,11 +50,11 @@ class NullRemover:
         dataset: numpy.ndarray
     ):
         dset_cpy = dataset.copy()
-
         zscored_cpy = dset_cpy[:, columns] - dset_cpy[:, columns].mean() / dset_cpy[:, columns].std(ddof=0)
+
         dataset[:, columns] = numpy.delete(
             dataset[:, columns], 
-            numpy.where((dataset[:, columns] > threshold[0]) | (dataset[:, columns] < threshold[1]))
+            numpy.where((zscored_cpy[:, columns] > threshold[0]) | (zscored_cpy[:, columns] < threshold[1]))
             axis=1
         )
 
@@ -73,20 +82,12 @@ class NullRemover:
 
         return dataset
 
-    def _lof_method (
-        self, 
-        lof_parameters: dict[str, Any], 
-        dataset: numpy.ndarray
-    ):
-        lof_instance = LocalOutlierFactor(**(lof_parameters or None))
+    def _lof_method (self, dataset: numpy.ndarray):
+        lof_instance = LocalOutlierFactor(**(self.lof_params or None))
         return lof_instance.fit_predict(dataset)
 
-    def _isolation_method (
-        self, 
-        iso_parameters: dict[str, Any], 
-        dataset: numpy.ndarray
-    ):
-        iso_instance = IsolationForest(**(iso_parameters or None))
+    def _isolation_method (self, dataset: numpy.ndarray):
+        iso_instance = IsolationForest(**(self.iso_params or None))
         return iso_instance.fit_predict(dataset)
 
     def transform (
