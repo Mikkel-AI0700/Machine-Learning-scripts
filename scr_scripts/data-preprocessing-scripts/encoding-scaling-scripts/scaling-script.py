@@ -13,6 +13,7 @@ logger.setLevel(logging.INFO)
 class ScaleColumns:
     def __init__ (self, scaler_parameters: dict[str, Any] = None):
         self.scaler_params = scaler_parameters
+        self.CORRECT_TYPES_LOG = "[*] Dataset and dataset types correct"
         self.TYPE_ERROR_LOG = "[!] Error: Dataset isn't NumPy or dataset elements have incorrect datatypes"
         self.ATTRIBUTE_ERROR_LOG = "[!] Error: Scaler type argument doesn't exist"
         self.SCALING_INFO_LOG = "[*] Scaler: {}\n[*] Columns: {}\n[*] Dataset: \n{}\n"
@@ -38,6 +39,7 @@ class ScaleColumns:
             elif scaler_type not in self.scaler_instances.keys():
                 return AttributeError(self.ATTRIBUTE_ERROR_LOG)
             else:
+                logger.info(self.CORRECT_TYPES_LOG)
                 return True
         except TypeError as incorrect_datatype_error:
             logger.error(incorrect_datatype_error)

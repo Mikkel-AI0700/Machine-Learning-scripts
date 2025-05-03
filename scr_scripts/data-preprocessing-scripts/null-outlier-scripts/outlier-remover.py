@@ -33,9 +33,9 @@ class NullRemover:
                 not numpy.issubdtype(dataset[:, columns], numpy.integer) or
                 not numpy.issubdtype(dataset[:, columns], numpy.floating)
             ):
-                raise TypeError(TYPE_ERROR_LOG)
-            elif remover_method not in REMOVER_INSTANCES:
-                raise AttributeError(ATTRIBUTE_ERROR_LOG)
+                raise TypeError(self.TYPE_ERROR_LOG)
+            elif remover_method not in self.REMOVER_INSTANCES:
+                raise AttributeError(self.ATTRIBUTE_ERROR_LOG)
             else:
                 return True
         except TypeError as incorrect_datatype_error:
