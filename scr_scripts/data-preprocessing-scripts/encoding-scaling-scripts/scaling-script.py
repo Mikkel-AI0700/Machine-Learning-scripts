@@ -11,23 +11,15 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 class ScaleColumns:
-    def __init__ (self, scaler_parameters: dict[str, Any] = None):
-        self.scaler_params = scaler_parameters
-        self.CORRECT_TYPES_LOG = "[*] Dataset and dataset types correct"
-        self.TYPE_ERROR_LOG = "[!] Error: Dataset isn't NumPy or dataset elements have incorrect datatypes"
-        self.ATTRIBUTE_ERROR_LOG = "[!] Error: Scaler type argument doesn't exist"
-        self.SCALING_INFO_LOG = "[*] Scaler: {}\n[*] Columns: {}\n[*] Dataset: \n{}\n"
-        self.scaler_instances = {
-            "standard": StandardScaler(**(self.scaler_params or None))
-            "minmax": MinMaxScaler(**(self.scaler_params or None)),
-            "maxabs": MaxAbsScaler(**(self.scaler_params or None)),
-            "normalizer": Normalizer(**(self.scaler_params or None))
-        }
+    def __init__ (self):
+        self.SCALER_SET = {"standard", "minmax", "maxabs", "normalizer"}
+        self.TYPE_ERROR_LOG = "[-] Error: Dataset isn't numpy or dataset samples dtype incorrect"
+        self.ATTRIBUTE_ERROR_LOG = "[-] Error: Scaler argument not in scaler set"
 
     def _check_types (
         self,
         scaler_type: str,
-        columns: Union[int, list[int]],
+        columns: Union[list[int], list[int, int]],
         dataset: numpy.ndarray
     ):
         try:
@@ -35,33 +27,42 @@ class ScaleColumns:
                 not numpy.issubdtype(dataset[:, columns].dtype, numpy.integer) or
                 not numpy.issubdtype(dataset[:, columns].dtype, numpy.floating)
             ):
-                return TypeError(self.TYPE_ERROR_LOG)
-            elif scaler_type not in self.scaler_instances.keys():
-                return AttributeError(self.ATTRIBUTE_ERROR_LOG)
+                raise TypeError(self.TYPE_ERROR_LOG)
+            elif scaler_type not in self.SCALER_SET:
+                raise AttributeError(self.ATTRIBUTE_ERROR_LOG)
             else:
-                logger.info(self.CORRECT_TYPES_LOG)
                 return True
         except TypeError as incorrect_datatype_error:
             logger.error(incorrect_datatype_error)
         except AttributeError as non_existent_scaler_error:
             logger.error(non_existent_scaler_error)
 
-    def _transform_dataset (
+    def _transform (
         self,
-        scaler: Callable
-        columns: Union[int, list[int]],
+        scaler: Callable,
+        columns: Union[list[int], list[int, int]],
         dataset: numpy.ndarray
     ):
-        logger.info(self.SCALING_LOG_INFO.format(scaler, columns, dataset))
-        return scaler.fit_transform(dataset[:, columns])
+        dataset[:, columns] = scaler.fit_transform(dataset[:, columns])
+        return dataset
 
     def transform (
         self,
         scaler_type: str = None,
-        columns: Union[int, list[int]] = None,
+        scaler_params: dict[str, Any] = None,
+        columns: Union[int, list[int, int]] = None,
         dataset: numpy.ndarray = None
     ):
-        if self.check_types(scaler_type, columns, dataset):
-            dataset = self._transform_dataset(self.scaler_instances.get(scaler_type), columns, dataset)
-            return dataset
+        columns = [columns] if isinstance(columns, int) else columns
+        scaler_instances = {
+            "standard": StandardScaler(**(scaler_params or None)),
+            "minmax": MinMaxScaler(**(scaler_params or None)),
+            "maxabs": MaxAbsScaler(**(scaler_params or None)),
+            "normalizer": Normalizer(**(scaler_params or None))
+        }
+
+        if self._check_types(scaler_type, columns, dataset):
+            return self._transform(
+                scaler_instances.get(scaler_type), columns, dataset
+            )
 
