@@ -66,12 +66,12 @@ class LoadDataset:
         loader = self._get_loading_method()
 
         if os.path.exists(self.fs_path):
-            self.datasets = {
-                "main_df": loader(self.fs_path, **self.extra_params),
-                "copy_df": loader(self.fs_path, **self.extra_params).copy(),
-                "numpy_df": loader(self.fs_path, **self.extra_params).to_numpy()
-            }
-            return self.datasets
+            return (
+                loader(self.fs_path, **self.extra_params),
+                loader(self.fs_path, **self.extra_params).copy(),
+                numpy.ndarray(loader(self.fs_path, **self.extra_params)),
+                numpy.ndarray(loader(self.fs_path, **self.extra_params)).copy(),
+            ) 
 
     def _load_uci (self):
         """
@@ -87,12 +87,12 @@ class LoadDataset:
         loader = self._get_loading_method()
         temporary_dataset = loader(id=self.uci_id)
 
-        self.datasets = {
-            "main_df": pandas.DataFrame(temporary_dataset.data.original, **self.extra_params),
-            "copy_df": pandas.DataFrame(temporary_dataset.data.original, **self.extra_params).copy(),
-            "numpy_df": pandas.DataFrame(temporary_dataset.data.original, **self.extra_params).to_numpy()
-        }
-        return self.datasets
+        return (
+            pandas.DataFrame(temporary_dataset.data.original),
+            pandas.DataFrame(temporary_dataset.data.original).copy(),
+            pandas.DataFrame(temporary_dataset.data.original).to_numpy(),
+            pandas.DataFrame(temporary_dataset.data.original).to_numpy().copy()
+        )
 
     def load (self, use_uci: bool = False, use_pandas: bool = False):
         """
@@ -114,7 +114,7 @@ class LoadDataset:
 
         return dataset_dictionary
 
-    def reset_datasets (self, dataset_dict: Dict[str, Union[numpy.ndarray, pandas.DataFrame]] = None):
+    def reset_datasets (self, dataset_dict: dict[str, Union[numpy.ndarray, pandas.DataFrame]] = None):
         """
         Method will reset the datasets dictionary should the datasets dictionary gets messed up
 
