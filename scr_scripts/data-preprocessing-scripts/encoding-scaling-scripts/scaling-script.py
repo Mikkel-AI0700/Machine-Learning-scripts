@@ -23,9 +23,9 @@ class ScaleColumns:
         dataset: numpy.ndarray
     ):
         try:
-            if (not isinstance(dataset, numpy.ndarray) or
-                not numpy.issubdtype(dataset[:, columns].dtype, numpy.integer) or
-                not numpy.issubdtype(dataset[:, columns].dtype, numpy.floating)
+            if (not isinstance(dataset, numpy.ndarray) 
+                #not numpy.issubdtype(dataset[:, columns].dtype, numpy.integer) and
+                #not numpy.issubdtype(dataset[:, columns].dtype, numpy.floating)
             ):
                 raise TypeError(self.TYPE_ERROR_LOG)
             elif scaler_type not in self.SCALER_SET:
@@ -50,15 +50,14 @@ class ScaleColumns:
         self,
         scaler_type: str = None,
         scaler_params: dict[str, Any] = None,
-        columns: Union[int, list[int, int]] = None,
+        columns: Union[list[int], list[int, int]] = None,
         dataset: numpy.ndarray = None
     ):
-        columns = [columns] if isinstance(columns, int) else columns
         scaler_instances = {
-            "standard": StandardScaler(**(scaler_params or None)),
-            "minmax": MinMaxScaler(**(scaler_params or None)),
-            "maxabs": MaxAbsScaler(**(scaler_params or None)),
-            "normalizer": Normalizer(**(scaler_params or None))
+            "standard": StandardScaler(**(scaler_params or {})),
+            "minmax": MinMaxScaler(**(scaler_params or {})),
+            "maxabs": MaxAbsScaler(**(scaler_params or {})),
+            "normalizer": Normalizer(**(scaler_params or {}))
         }
 
         if self._check_types(scaler_type, columns, dataset):
