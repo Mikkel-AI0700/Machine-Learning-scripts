@@ -25,7 +25,7 @@ class EncodeColumns:
     def _check_types (
         self,
         encoder_type: str,
-        columns: Union[int, list[int]],
+        columns: Union[list[int], list[int, int]],
         dataset: numpy.ndarray
     ):
         try:
@@ -45,7 +45,7 @@ class EncodeColumns:
     def _transform_dataset (
         self,
         encoder: Callable,
-        columns: Union[int, list[int]],
+        columns: Union[list[int], list[int, int]],
         dataset: numpy.ndarray
     ):
         if encoder.__class__.__name__ == "OneHotEncoder":
@@ -68,20 +68,19 @@ class EncodeColumns:
         self,
         encoder_type: str = None,
         encoder_params: dict[str, Any] = None,
-        columns: Union[int, list[int]] = None,
+        columns: Union[list[int], list[int, int]] = None,
         dataset: numpy.ndarray
     ):
         encoder_instances = {
-            "ohe": OneHotEncoder(**(encoder_params or None)),
-            "ordinal": OrdinalEncoder(**(encoder_params or None)),
-            "target": TargetEncoder(**(encoder_params or None)),
-            "binarizer": LabelBinarizer(**(encoder_params or None)),
-            "lencoder": LabelEncoder(**(encoder_params or None))
+            "ohe": OneHotEncoder(**(encoder_params or {})),
+            "ordinal": OrdinalEncoder(**(encoder_params or {})),
+            "target": TargetEncoder(**(encoder_params or {})),
+            "binarizer": LabelBinarizer(**(encoder_params or {})),
+            "lencoder": LabelEncoder(**(encoder_params or {}))
         }
 
         if self._check_types(encoder_type, encoder_instances, columns, dataset):
-            dataset = self._transform_dataset(
+            return self._transform_dataset(
                 encoder_instances.get(encoder_type), columns, dataset
             )
-            return dataset
 
