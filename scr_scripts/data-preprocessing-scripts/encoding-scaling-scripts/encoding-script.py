@@ -17,31 +17,6 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 class EncodeColumns:
-    def __init__ (self):
-        self.ENCODER_SET = {"ohe", "ordinal", "target", "binarizer", "lencoder"}
-        self.TYPE_ERROR_LOG = "[!] Error: NumPy dataset or dataset elements dtype is wrong"
-        self.ATTRIBUTE_ERROR_LOG = "[!] Error: Encoder type not in encoder set"
-
-    def _check_types (
-        self,
-        encoder_type: str,
-        columns: Union[list[int], list[int, int]],
-        dataset: numpy.ndarray
-    ):
-        try:
-            if (not isinstance(dataset, numpy.ndarray) or
-                not numpy.issubdtype(dataset[:, columns].dtype, numpy.character)
-            ):
-                raise TypeError(self.TYPE_ERROR_LOG)
-            elif encoder_type not in self.ENCODER_SET:
-                raise AttributeError(self.ATTRIBUTE_ERROR_LOG)
-            else:
-                return True
-        except TypeError as incorrect_datatype_error:
-            logger.error(incorrect_datatype_error)
-        except AttributeError as non_existent_encoder_error:
-            logger.error(non_existent_encoder_error)
-
     def _transform_dataset (
         self,
         encoder: Callable,
@@ -79,8 +54,10 @@ class EncodeColumns:
             "lencoder": LabelEncoder(**(encoder_params or {}))
         }
 
-        if self._check_types(encoder_type, encoder_instances, columns, dataset):
+        if encoder_type in encoder_instances.keys():
             return self._transform_dataset(
                 encoder_instances.get(encoder_type), columns, dataset
             )
+        else:
+            raise AttributeError("[-] Error: User supplied encoder doesn't exist") 
 
