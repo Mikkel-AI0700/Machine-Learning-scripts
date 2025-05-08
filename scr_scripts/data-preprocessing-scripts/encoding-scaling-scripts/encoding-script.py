@@ -32,7 +32,14 @@ class EncodeColumns:
                 axis=1
             )
         elif encoder.__class__.__name__ == "TargetEncoder":
-            temp_x, temp_y = dataset[:, :-1], dataset[:, -1]
+            temp_train_x, _, temp_train_y, _ = train_test_split(
+                dataset[:, :-1],
+                dataset[:, -1],
+                train_size = 0.8,
+                test_size = 0.2,
+                shuffle = True,
+                random_state = 42
+            )
             dataset[:, columns] = encoder.fit_transform(temp_x, temp_y)
         else:
             dataset[:, columns] = encoder.fit_transform(dataset[:, columns])
