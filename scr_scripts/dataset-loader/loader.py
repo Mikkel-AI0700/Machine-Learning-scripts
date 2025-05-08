@@ -30,7 +30,7 @@ class LoadDataset:
         self.loader_method = load_method
         self.fs_path = filesystem_path
         self.extra_params = kwargs
-        self.datasets = {}
+        self.datasets = ()
         self.loader_methods = {
             "csv": pandas.read_csv,
             "xlsx": pandas.read_excel,
@@ -52,10 +52,33 @@ class LoadDataset:
         if self.loader_method in self.loader_methods.keys():
             return self.loader_methods.get(self.loader_method)
 
+    def _create_datasets (self, loaded_dataframe: pandas.DataFrame):
+        """
+        Function will construct the four datasets that will be returned
+        after getting the dataset from _load_pandas or _load_uci
+
+        The four datasets will be saved in an attribute for the reset_datasets
+        method
+
+        Parameters 
+            loaded_dataset (pandas.DataFrame): The converted dataset from _load_pandas or _load_uci
+
+        Returns:
+            tuple (pandas.DataFrame, numpy.ndarray)
+        """
+
+        self.datasets = (
+            loaded_dataframe,
+            loaded_dataframe.copy(),
+            loaded_dataframe.to_numpy(),
+            loaded_dataframe.to_numpy(copy=True)
+        )
+        return self.datasets
+
     def _load_pandas (self):
         """
-        Will get loader reference and if filesystem paths exists, it will assign/create
-        three datasets: main dataframe, copy of main dataframe and a numpy representation of main dataframe
+        Loads a raw dataset from a filesystem path using the Pandas' Input/output functions.
+        Will call the self._create_dataset method to construct four datasets
 
         Parameters:
             None
@@ -64,14 +87,8 @@ class LoadDataset:
             datasets (dict): Three datasets, two pandas dataframe and one numpy representation
         """
         loader = self._get_loading_method()
-
         if os.path.exists(self.fs_path):
-            self.datasets = {
-                "main_df": loader(self.fs_path, **self.extra_params),
-                "copy_df": loader(self.fs_path, **self.extra_params).copy(),
-                "numpy_df": loader(self.fs_path, **self.extra_params).to_numpy()
-            }
-            return self.datasets
+            return self._create_datasets(loader(self.fs_path, **self.extra_params))
 
     def _load_uci (self):
         """
@@ -86,13 +103,7 @@ class LoadDataset:
         """
         loader = self._get_loading_method()
         temporary_dataset = loader(id=self.uci_id)
-
-        self.datasets = {
-            "main_df": pandas.DataFrame(temporary_dataset.data.original, **self.extra_params),
-            "copy_df": pandas.DataFrame(temporary_dataset.data.original, **self.extra_params).copy(),
-            "numpy_df": pandas.DataFrame(temporary_dataset.data.original, **self.extra_params).to_numpy()
-        }
-        return self.datasets
+        return self._create_datasets(pandas.DataFrame(temporary_dataset.data.original))
 
     def load (self, use_uci: bool = False, use_pandas: bool = False):
         """
@@ -106,15 +117,15 @@ class LoadDataset:
             datasets (dict): Three datasets, two pandas dataframe and one numpy representation
         """
         if use_uci:
-            logging.info("[*] Creating three datasets using pandas")
-            dataset_dictionary = self._load_uci()
+            logger.info("[*] Creating three datasets using UCI")
+            dataset = self._load_uci()
         if use_pandas:
-            logging.info("[*] Creating three datasets using ucimlrepo")
-            dataset_dictionary = self._load_pandas()
+            logger.info("[*] Creating three datasets using Pandas")
+            dataset = self._load_pandas()
 
-        return dataset_dictionary
+        return dataset
 
-    def reset_datasets (self, dataset_dict: Dict[str, Union[numpy.ndarray, pandas.DataFrame]] = None):
+    def reset_datasets (self, datasets: tuple[pandas.DataFrame, numpy.ndarray] = None):
         """
         Method will reset the datasets dictionary should the datasets dictionary gets messed up
 
@@ -124,5 +135,5 @@ class LoadDataset:
         Returns:
             dataset_dict (dict): Resetted dictionary
         """
-        dataset_dict = self.datasets
+        dataset = self.datasets
         return dataset_dict
