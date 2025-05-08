@@ -64,7 +64,7 @@ class InheritorClass:
             axes (matplotlib.pyplot.Axes): The axes to use for plotting
         """
         row_amount, column_amount = self._calculate_row_amount(displot_type=displot_type)
-        figure, axes = matplotlib.pyplot.subplots(nrows=row_amount, ncols=column_amount, figsize=(25.5, 7.5))
+        figure, axes = matplotlib.pyplot.subplots(nrows=row_amount, ncols=column_amount, figsize=(25.5, 14.5))
         return figure, axes
 
     def _plot(self, axes = None, plot_method = None):
