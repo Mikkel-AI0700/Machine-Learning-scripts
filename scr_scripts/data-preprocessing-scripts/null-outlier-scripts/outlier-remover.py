@@ -83,11 +83,11 @@ class NullRemover:
         return dataset
 
     def _lof_method (self, dataset: numpy.ndarray):
-        lof_instance = LocalOutlierFactor(**(self.lof_params or None))
+        lof_instance = LocalOutlierFactor(**(self.lof_params or {}))
         return lof_instance.fit_predict(dataset)
 
     def _isolation_method (self, dataset: numpy.ndarray):
-        iso_instance = IsolationForest(**(self.iso_params or None))
+        iso_instance = IsolationForest(**(self.iso_params or {}))
         return iso_instance.fit_predict(dataset)
 
     def transform (
@@ -99,7 +99,7 @@ class NullRemover:
     ):
         if self._check_types(remover_method, columns, dataset):
             if remover_method is "zscore":
-                dataset = self._zscore_method(threshold, columns, dataset)
+                dataset = self._zscore_method(self.threshold, columns, dataset)
             elif remover_method is "iqr":
                 dataset = self._iqr_method(columns, dataset)
             elif remover_method is "lof":
