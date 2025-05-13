@@ -44,7 +44,7 @@ class InheritorClass:
             row_amount (int): Amount of rows to create by plt.subplots
             element_length, column_border (int): Amount of columns to create by plt.subplots
         """
-        if displot_type:
+        if self.y_vars == None:
             element_length = len(self.x_vars)
         else:
             element_length = len(self.y_vars)
