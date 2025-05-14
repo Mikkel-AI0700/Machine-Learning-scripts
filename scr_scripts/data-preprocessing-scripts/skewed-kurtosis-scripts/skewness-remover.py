@@ -16,11 +16,9 @@ class RemoveSkew:
         self, 
         power_transformer_parameters: dict[str, Any] = None,
         quantile_transformer_parameters: dict[str, Any] = None
-    ):
-        self.pt_params = power_transformer_parameters
-        self.qt_params = quantile_transformer_parameters
-        self.pt_instance = PowerTransformer(**(self.pt_params or {}))
-        self.qt_instance = QuantileTransformer(**(self.qt_params or {}))
+    ): 
+        self.pt_instance = PowerTransformer(**(power_transformer_parameters or {}))
+        self.qt_instance = QuantileTransformer(**(quantile_transformer_parameters or {}))
         self.mild_negative_threshold = -0.5
         self.mild_positive_threshold = 0.5
         self.severe_negative_threshold = -1
@@ -44,14 +42,16 @@ class RemoveSkew:
         skew_values: Union[int, float, list[int, ...], list[float, ...]]
     ):
         skew_level_array = []
+        if not isinstance(skew_level_array, list):
+            skew_level_array = [skew_level_array]
 
         for skew_value in skew_values:
-            if (skew_level > self.mild_negative_threshold and
-                skew_level < self.mild_positive_threshold
+            if (skew_value > self.mild_negative_threshold and
+                skew_value < self.mild_positive_threshold
             ):
                 skew_level_array.append("Moderate")
-            elif (skew_level > self.severe_negative_threshold or
-                skew_level > self.severe_positive_threshold
+            elif (skew_value > self.severe_negative_threshold or
+                skew_value > self.severe_positive_threshold
             ):
                 skew_level_array.append("Severe")
             else:
@@ -75,6 +75,8 @@ class RemoveSkew:
             else:
                 continue
 
+        return dataset
+
     def _transform_using_pandas (
         self,
         columns: list[str, ...],
@@ -89,7 +91,9 @@ class RemoveSkew:
             elif skew_level == "Moderate":
                 dataset[column] = self.pt_instance.fit_transform(dataset[column])
             else:
-                continue 
+                continue
+
+        return dataset
     
     def transform (
         self,
@@ -97,6 +101,6 @@ class RemoveSkew:
         dataset: Union[numpy.ndarray, pandas.DataFrame] = None
     ):
         if isinstance(dataset, numpy.ndarray):
-            self._transform_using_numpy(skew_transformers.get(skew_remover), columns, dataset)
+            return self._transform_using_numpy(skew_transformers.get(skew_remover), columns, dataset)
         else:
-            self._transform_using_pandas(skew_transformers.get(skew_remover), columns, dataset)
+            return self._transform_using_pandas(skew_transformers.get(skew_remover), columns, dataset)
