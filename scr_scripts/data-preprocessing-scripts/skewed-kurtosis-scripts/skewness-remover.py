@@ -46,14 +46,16 @@ class RemoveSkew:
             skew_values = [skew_values]
 
         for skew_value in skew_values:
-            if (skew_value > self.mild_negative_threshold and
-                skew_value < self.mild_positive_threshold
-            ):
-                skew_level_array.append("Moderate")
-            elif (skew_value > self.severe_negative_threshold or
+            if (skew_value > self.severe_negative_threshold or 
                 skew_value > self.severe_positive_threshold
             ):
                 skew_level_array.append("Severe")
+            elif (skew_value > self.mild_negative_threshold and
+                skew_value < self.severe_negative_threshold or
+                skew_value > self.mild_positive_threshold and
+                skew_value < self.severe_positive_threshold
+            ):
+                skew_level_array.append("Moderate")
             else:
                 skew_level_array.append("Mild")
 
