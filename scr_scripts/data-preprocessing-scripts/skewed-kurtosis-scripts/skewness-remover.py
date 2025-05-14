@@ -42,8 +42,8 @@ class RemoveSkew:
         skew_values: Union[int, float, list[int, ...], list[float, ...]]
     ):
         skew_level_array = []
-        if not isinstance(skew_level_array, list):
-            skew_level_array = [skew_level_array]
+        if not isinstance(skew_values, list):
+            skew_values = [skew_values]
 
         for skew_value in skew_values:
             if (skew_value > self.mild_negative_threshold and
