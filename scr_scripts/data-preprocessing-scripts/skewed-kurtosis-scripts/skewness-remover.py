@@ -61,6 +61,18 @@ class RemoveSkew:
 
         return skew_level_array
 
+    def _apply_transformation (
+        self,
+        column: Union[numpy.ndarray, pandas.Series],
+        skew_level: str
+    ):
+        if skew_level == "Severe":
+            return self.qt_instance.fit_transform(column)
+        elif skew_level == "Moderate":
+            return self.pt_instance.fit_transform(column)
+        else:
+            pass
+
     def _transform_using_numpy (
         self,
         columns: list[int, ...],
@@ -69,15 +81,9 @@ class RemoveSkew:
         dataset_skew_value = self._calculate_skew(is_numpy=True, columns=columns, dataset=dataset)
         dataset_skew_levels = self._determine_skew_level(dataset_skew_value)
 
-        for column, skew_level in zip(columns, dataset_skew_levels):
-            if skew_level == "Severe":
-                dataset[:, [column]] = self.qt_instance.fit_transform(dataset[:, [column]])
-            elif skew_level == "Moderate":
-                dataset[: [column]] = self.pt_instance.fit_transform(dataset[: [column]])
-            else:
-                continue
-
-        return dataset
+        for column, skew_level in zip(column, dataset_skew_levels):
+            dataset[:, [column]] = self._apply_transformation(dataset[:, [column]], skew_level)
+        return dataset 
 
     def _transform_using_pandas (
         self,
@@ -88,13 +94,7 @@ class RemoveSkew:
         dataset_skew_levels = self._determine_skew_level(dataset_skew_value)
 
         for column, skew_level in zip(columns, dataset_skew_levels):
-            if skew_level == "Severe":
-                dataset[column] = self.qt_instance.fit_transform(dataset[column])
-            elif skew_level == "Moderate":
-                dataset[column] = self.pt_instance.fit_transform(dataset[column])
-            else:
-                continue
-
+            dataset[column] = self._apply_transformation(dataset[column], skew_level)
         return dataset
     
     def transform (
