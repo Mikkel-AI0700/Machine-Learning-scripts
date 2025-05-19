@@ -1,7 +1,7 @@
 # WARNING: DO NOT IMPORT CLASSES BELOW. USE DEPENDENCY IMPORTER
 
 import logging
-from typing import Union, Callable
+from typing import Union, Callable, Any
 
 import numpy
 import pandas
@@ -43,7 +43,7 @@ class RemoveSkew:
     ):
         skew_level_array = []
         if not isinstance(skew_values, list):
-            skew_values = [skew_values]
+            skew_values = numpy.asarray(skew_values)
 
         for skew_value in skew_values:
             if (skew_value > self.severe_negative_threshold or 
@@ -63,7 +63,7 @@ class RemoveSkew:
 
     def _apply_transformation (
         self,
-        column: Union[numpy.ndarray, pandas.Series],
+        column: Union[numpy.ndarray, pandas.DataFrame],
         skew_level: str
     ):
         if skew_level == "Severe":
@@ -103,6 +103,6 @@ class RemoveSkew:
         dataset: Union[numpy.ndarray, pandas.DataFrame] = None
     ):
         if isinstance(dataset, numpy.ndarray):
-            return self._transform_using_numpy(skew_transformers.get(skew_remover), columns, dataset)
+            return self._transform_using_numpy(columns, dataset)
         else:
-            return self._transform_using_pandas(skew_transformers.get(skew_remover), columns, dataset)
+            return self._transform_using_pandas(columns, dataset)
