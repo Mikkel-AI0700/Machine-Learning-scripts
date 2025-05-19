@@ -135,5 +135,5 @@ class LoadDataset:
         Returns:
             dataset_dict (dict): Resetted dictionary
         """
-        dataset = self.datasets
-        return dataset_dict
+        datasets = self.datasets
+        return datasets
