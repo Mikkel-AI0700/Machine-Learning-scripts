@@ -63,9 +63,12 @@ class RemoveSkew:
 
     def _apply_transformation (
         self,
-        column: Union[numpy.ndarray, pandas.DataFrame],
+        column: Union[numpy.ndarray, pandas.Series],
         skew_level: str
     ):
+        if isinstance(column, panda.Series):
+            column = pandas.DataFrame(column)
+
         if skew_level == "Severe":
             return self.qt_instance.fit_transform(column)
         elif skew_level == "Moderate":
@@ -94,7 +97,7 @@ class RemoveSkew:
         dataset_skew_levels = self._determine_skew_level(dataset_skew_value)
 
         for column, skew_level in zip(columns, dataset_skew_levels):
-            dataset[column] = self._apply_transformation(dataset[column], skew_level)
+            dataset[[column]] = self._apply_transformation(dataset[[column]], skew_level)
         return dataset
     
     def transform (
