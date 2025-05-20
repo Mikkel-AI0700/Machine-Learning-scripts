@@ -125,15 +125,11 @@ class LoadDataset:
 
         return dataset
 
-    def reset_datasets (self, datasets: tuple[pandas.DataFrame, numpy.ndarray] = None):
+    def reset_datasets (self):
         """
-        Method will reset the datasets dictionary should the datasets dictionary gets messed up
-
-        Parameters:
-            dataset_dict (dict): Dictionary that contains the three original datasets
+        Method will reset the datasets dictionary should the datasets dictionary gets messed up 
 
         Returns:
             dataset_dict (dict): Resetted dictionary
         """
-        datasets = self.datasets
-        return datasets
+        return self.datasets
