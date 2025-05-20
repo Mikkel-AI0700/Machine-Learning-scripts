@@ -1,70 +1,100 @@
-# WARNING: DO NOT COPY PASTE THE IMPORTS ABOVE CLASS. USE DEPENDENCY IMPORTER
-from typing import Dict, List, Union
-import logging
+# WARNING: DO NOT COPY AND PASTE THE IMPORTS. USE DEPENDENCY IMPORTER
+
+from typing import Union, Callable
 import numpy
 import pandas
 from sklearn.model_selection import train_test_split
-from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import (
-    OneHotEncoder, 
-    OrdinalEncoder, 
-    TargetEncoder, 
-    LabelEncoder, 
-    LabelBinarizer
+    OneHotEncoder,
+    OrdinalEncoder,
+    TargetEncoder,
+    LabelBinarizer,
+    LabelEncoder
 )
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
 class EncodeColumns:
-    def _transform_dataset (
+    def __init__ (self):
+        self.encoder_instances = {
+            "ohe": OneHotEncoder,
+            "ordinal": OrdinalEncoder,
+            "target": TargetEncoder,
+            "binarizer": LabelBinarizer,
+            "lencoder": LabelEncoder
+        }
+
+    def _transform_using_numpy (
         self,
-        encoder: Callable,
-        columns: Union[list[int], list[int, int]],
+        encoder_instance: Callable,
+        columns: list[int, ...],
         dataset: numpy.ndarray
     ):
-        if encoder.__class__.__name__ == "OneHotEncoder":
-            dataset = numpy.concat(
+        if encoder_instance.__class__.__name__ == "OneHotEncoder":
+            return numpy.concat(
                 (
-                    numpy.delete(dataset, columns, axis=1), 
-                    encoder.fit_transform(dataset[:, columns])
+                    numpy.delete(dataset, columns, axis=1),
+                    encoder_instance.fit_transform(dataset[:, columns])
                 ),
                 axis=1
             )
-        elif encoder.__class__.__name__ == "TargetEncoder":
-            temp_train_x, _, temp_train_y, _ = train_test_split(
+        elif encoder_instance.__class__.__name__ == "TargetEncoder":
+            train_x, _, train_y, _ = train_test_split(
                 dataset[:, :-1],
                 dataset[:, -1],
-                train_size = 0.8,
-                test_size = 0.2,
-                shuffle = True,
-                random_state = 42
+                train_size=0.7,
+                test_size=0.3,
+                random_state=42,
+                shuffle=True
             )
-            dataset[:, columns] = encoder.fit_transform(temp_x, temp_y)
+            return encoder_instance.fit_transform(train_x, train_y)
         else:
-            dataset[:, columns] = encoder.fit_transform(dataset[:, columns])
+            return encoder_instance.fit_transform(dataset[:, columns])
 
-        return dataset
+    def _transform_using_pandas (
+        self,
+        encoder_instance: Callable,
+        columns: list[str, ...],
+        dataset: pandas.DataFrame
+    ):
+        if encoder_instance.__class__.__name__ == "OneHotEncoder":
+            return pandas.concat(
+                [
+                    dataset.drop(columns, axis=1),
+                    encoder_instance.fit_transform(dataset[columns])
+                ],
+                axis=1
+            )
+        elif encoder_instance.__class__.__name__ == "TargetEncoder":
+            train_x, _, train_y, _ = train_test_split(
+                dataset.iloc[:, :-1],
+                dataset.iloc[:, -1],
+                train_size=0.7,
+                test_size=0.3,
+                random_state=42,
+                shuffle=True
+            )
+            return encoder_instance.fit_transform(train_x, train_y)
+        else:
+            return encoder_instance.fit_transform(dataset[columns])
 
     def transform (
         self,
-        encoder_type: str = None,
-        encoder_params: dict[str, Any] = None,
-        columns: Union[list[int], list[int, int]] = None,
-        dataset: numpy.ndarray
+        encoder_type: str,
+        encoder_parameters: dict[str, Any],
+        columns: Union[list[str, ...], list[int, ...]],
+        dataset: Union[numpy.ndarray, pandas.DataFrame]
     ):
-        encoder_instances = {
-            "ohe": OneHotEncoder(**(encoder_params or {})),
-            "ordinal": OrdinalEncoder(**(encoder_params or {})),
-            "target": TargetEncoder(**(encoder_params or {})),
-            "binarizer": LabelBinarizer(**(encoder_params or {})),
-            "lencoder": LabelEncoder(**(encoder_params or {}))
-        }
+        if encoder_type_type not in self.encoder_instances.keys():
+            raise ValueError("[-] Error: User supplied encoder doesn't exist")
 
-        if encoder_type in encoder_instances.keys():
-            return self._transform_dataset(
-                encoder_instances.get(encoder_type), columns, dataset
+        if isinstance(dataset, numpy.ndarray):
+            return self._transform_using_numpy(
+                self.encoder_instances.get(encoder_type)(**(encoder_parameters or {})),
+                columns,
+                dataset
             )
-        else:
-            raise AttributeError("[-] Error: User supplied encoder doesn't exist") 
-
+        if isinstance(dataset, pandas.DataFrame):
+            return self._transform_using_pandas(
+                self.encoder_instances.get(encoder_type)(**(encoder_parameters or {})),
+                columns,
+                dataset
+            )
