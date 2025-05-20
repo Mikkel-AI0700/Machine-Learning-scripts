@@ -42,14 +42,18 @@ class PlotDataset:
             element_length, column_border (int): Amount of columns to create by plt.subplots
         """
         if len(y_vars) == 0:
-            element_length = len(self.x_vars)
+            element_length = len(x_vars)
         else:
-            element_length = len(self.y_vars)
+            element_length = len(y_vars)
 
         row_amount = (element_length // column_border) + (element_length % column_border > 0)
         return row_amount, min(element_length, column_border)
 
-    def _initialize_figure_axes (self):
+    def _initialize_figure_axes (
+        self,
+        x_vars: list[str, ...],
+        y_vars: list[str, ...]
+    ):
         """
         Will create the figure and the axes using the numbers from _calculate_row_amount for plotting
 
@@ -60,7 +64,7 @@ class PlotDataset:
             figure (matplotlib.pyplot.figure): The figure to use for plotting
             axes (matplotlib.pyplot.Axes): The axes to use for plotting
         """
-        row_amount, column_amount = self._calculate_row_amount()
+        row_amount, column_amount = self._calculate_row_amount(x_vars, y_vars)
         figure, axes = matplotlib.pyplot.subplots(nrows=row_amount, ncols=column_amount, figsize=(25.5, 14.5))
         return figure, axes
 
@@ -108,12 +112,20 @@ class PlotDataset:
         relplot_type: str,
         x_vars: list[str, ...],
         y_vars: list[str, ...],
-        dataset: pandas.DataFrame
+        dataset: pandas.DataFrame,
+        **kwargs
     ):
-        figure, axes = self._initialize_figure_axes()
+        figure, axes = self._initialize_figure_axes(x_vars, y_vars)
         
         if relplot_type in self.relplot_functions.keys():
-            self._plot(axes, self.relplot_functions.get(relplot_type))
+            self._plot(
+                axes, 
+                self.relplot_functions.get(relplot_type),
+                x_vars,
+                y_vars,
+                dataset,
+                **kwargs
+            )
         else:
             raise ValueError("[-] Error: User supplied relplot argument doesn't exist")
 
@@ -122,12 +134,19 @@ class PlotDataset:
         displot_type: str,
         x_vars: list[str, ...],
         y_vars: list[str, ...],
-        dataset: pandas.DataFrame
-
+        dataset: pandas.DataFrame,
+        **kwargs
     ):
-        figure, axes = self._initialize_figure_axes()
+        figure, axes = self._initialize_figure_axes(x_vars, y_vars)
         if displot_type in self.displot_functions.keys():
-            self._plot(axes, self.displot_functions.get(displot_type))
+            self._plot(
+                axes, 
+                self.displot_functions.get(displot_type),
+                x_vars,
+                y_vars,
+                dataset,
+                **kwargs
+            )
         else:
             raise ValueError("[-] Error: User supplied displot argument doesn't exist")
 
@@ -135,10 +154,18 @@ class PlotDataset:
         self,
         x_vars: list[str, ...],
         y_vars: list[str, ...],
-        dataset: pandas.DataFrame
+        dataset: pandas.DataFrame,
+        **kwargs
     ):
-        figure, axes = self._initialize_figure_axes()
+        figure, axes = self._initialize_figure_axes(x_vars, y_vars)
         if catplot_type in self.catplot_functions.keys():
-            self._plot(axes, self.catplot_functions.get(catplot_type))
+            self._plot(
+                axes, 
+                self.catplot_functions.get(catplot_type),
+                x_vars,
+                y_vars,
+                dataset,
+                **kwargs
+            )
         else:
             raise ValueError("[-] Error: User supplied catplot argument doesn't exist")
