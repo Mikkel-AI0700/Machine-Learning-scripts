@@ -13,8 +13,9 @@ logger.setLevel(logging.INFO)
 
 class ImportRequiredDependencies:
     def import_through_selection (
-        self, standard_module: bool = False, 
-        sklearn_module: bool = False, 
+        self, 
+        standard_module: bool = False, 
+        non_standalone: bool = False, 
         package_module: str = None, 
         modules_to_import: List[str] = None
     ):
@@ -23,7 +24,7 @@ class ImportRequiredDependencies:
 
         Parameters:
             standard_module (bool): Set to True if importing modules not inside packages
-            sklearn_module (bool): Set to True if importing modules from Scikit-Learn
+            non_standalone (bool): Set to True if importing modules from Scikit-Learn
             module (str): Scikit-Learn module to get attribute from
             modules_to_import (Dict[str, str]): Modules containing the key-value modules to import
 
@@ -35,7 +36,7 @@ class ImportRequiredDependencies:
                 for module in modules_to_import:
                     logging.info("[*] Importing module: {}".format(module))
                     globals()[module] = importlib.import_module(module)
-            if sklearn_module:
+            if non_standalone:
                 for module in modules_to_import:
                     logging.info("[*] Importing {}".format(module))
                     globals()[module] = getattr(importlib.import_module(package_module), module)
