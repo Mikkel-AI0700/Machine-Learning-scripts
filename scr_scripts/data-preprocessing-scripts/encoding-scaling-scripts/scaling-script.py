@@ -11,33 +11,46 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 class ScaleColumns:
-    def _transform (
+    def __init__ (self):
+        self.scaler_instances = {
+            "normalizer": Normalizer,
+            "standard": StandardScaler,
+            "minmax": MinMaxScaler,
+            "maxabs": MaxAbsScaler
+        }
+
+    def _transform_using_numpy (
         self,
-        scaler: Callable,
-        columns: Union[list[int], list[int, int]],
+        scaler_instance: Callable,
+        columns: list[int, ...],
         dataset: numpy.ndarray
     ):
-        dataset[:, columns] = scaler.fit_transform(dataset[:, columns])
-        return dataset
+        return scaler_instance.fit_transform(dataset[:, columns])
+
+    def _transform_using_pandas (
+        self,
+        scaler_instance: Callable,
+        columns: list[str, ...],
+        dataset: numpy.ndarray
+    ):
+        return scaler_instance.fit_transform(dataset[columns])
 
     def transform (
         self,
-        scaler_type: str = None,
-        scaler_params: dict[str, Any] = None,
-        columns: Union[list[int], list[int, int]] = None,
-        dataset: numpy.ndarray = None
+        scaler_type: str,
+        scaler_parameters: dict[str, Any],
+        columns: Union[list[int, ...], list[str, ...]],
+        dataset: Union[numpy.ndarray, pandas.DataFrame]
     ):
-        scaler_instances = {
-            "standard": StandardScaler(**(scaler_params or {})),
-            "minmax": MinMaxScaler(**(scaler_params or {})),
-            "maxabs": MaxAbsScaler(**(scaler_params or {})),
-            "normalizer": Normalizer(**(scaler_params or {}))
-        }
-
-        if scaler_type in scaler_instances.keys():
-            return self._transform(
-                scaler_instances.get(scaler_type), columns, dataset
+        if isinstance(dataset, numpy.ndarray) and scaler_type in self.scaler_instances.keys():
+            return self._transform_using_numpy(
+                self.scaler_instances.get(scaler_type)(**(scaler_parameters or {})),
+                columns,
+                dataset
             )
-        else:
-            raise AttributeError("[-] Error: User supplied scaler doesn't exist")
-
+        if isinstance(dataset, pandas.DataFrame) and scaler_type in self.scaler_instances.keys():
+            return self._transform_using_pandas(
+                self.scaler_instances.get(scaler_type)(**(scaler_parameters or {})),
+                columns,
+                dataset
+            )
