@@ -87,6 +87,11 @@ class PlotDataset:
         Returns:
             None
         """
+        if not isinstance(axes, numpy.ndarray):
+            axes = numpy.asarray(axes).flatten()
+        else:
+            axes = axes.flatten()
+
         axes = axes.flatten()
 
         if plot_function in {seaborn.histplot, seaborn.kdeplot, seaborn.ecdfplot, seaborn.countplot}:
@@ -152,6 +157,7 @@ class PlotDataset:
 
     def plot_categorical (
         self,
+        catplot_type: str,
         x_vars: list[str, ...],
         y_vars: list[str, ...],
         dataset: pandas.DataFrame,
