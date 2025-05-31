@@ -1,12 +1,20 @@
+name: Upload Python Package
+
+on:
+  release:
+    types: [published]
+
 jobs:
-  pypi-publish:
-    name: autoai_scripts
-    on:
-      release:
-        types: [published]
-    runs-on: ubuntu-latest
+  publish-to-pypi:
     permissions:
       id-token: write
+      contents: read
+    runs-on: ubuntu-latest
     steps:
-      - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - run: python -m pip install build
+      - run: python -m build
+      - uses: pypa/gh-action-pypi-publish@release/v1
