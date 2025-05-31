@@ -1,8 +1,10 @@
 jobs:
   pypi-publish:
     name: autoai_scripts
+    on:
+      release:
+        types: [published]
     runs-on: ubuntu-latest
-
     permissions:
       id-token: write
     steps:
